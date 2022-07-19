@@ -2,7 +2,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deploy("Lottery", {
+  await deploy("LotteryGame", {
     from: deployer,
     args: [],
     log: true,
