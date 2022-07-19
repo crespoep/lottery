@@ -2,6 +2,8 @@ const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
 
 describe('LotteryGame', () => {
+  const ONE_ETHER = ethers.constants.WeiPerEther;
+
   let
     LotteryGame,
     lotteryContract
@@ -27,17 +29,24 @@ describe('LotteryGame', () => {
       let num = await lotteryContract.lotteryId();
       expect(num).to.equal(0);
 
-      await lotteryContract.createLottery();
+      await lotteryContract.createLottery(ONE_ETHER);
 
       num = await lotteryContract.lotteryId();
       expect(num).to.equal(1);
     });
 
     it('should set the current id correctly', async () => {
-      await lotteryContract.createLottery();
+      await lotteryContract.createLottery(ONE_ETHER);
       const lottery = await lotteryContract.getLottery(1);
 
       expect(lottery.id).to.equal("1");
+    });
+
+    it('should have the correct required ticket price', async () => {
+      await lotteryContract.createLottery(ONE_ETHER);
+      const game = await lotteryContract.getLottery(1);
+
+      expect(game.ticket).to.equal(ONE_ETHER);
     });
   })
 })

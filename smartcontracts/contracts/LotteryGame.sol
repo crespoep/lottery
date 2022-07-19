@@ -10,14 +10,15 @@ contract LotteryGame {
 
   struct Lottery {
     uint256 id;
+    uint256 ticket;
   }
 
   mapping(uint256 => Lottery) private lotteryById;
 
-  function createLottery() public {
+  function createLottery(uint256 ticket) public {
     lotteryId.increment();
     uint256 currentId = lotteryId.current();
-    lotteryById[currentId] = Lottery(currentId);
+    lotteryById[currentId] = Lottery(currentId, ticket);
   }
 
   function getLottery(uint256 _lotteryId) external view returns(Lottery memory){
