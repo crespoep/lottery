@@ -3,6 +3,7 @@ const { ethers, deployments } = require("hardhat");
 
 describe('LotteryGame', () => {
   const ONE_ETHER = ethers.constants.WeiPerEther;
+  const DURATION_IN_SECONDS = 60;
 
   let
     LotteryGame,
@@ -26,27 +27,39 @@ describe('LotteryGame', () => {
 
   describe('game creation', async () => {
     it('increments the number of games', async () => {
-      let num = await lotteryContract.lotteryId();
-      expect(num).to.equal(0);
+      let lotteryId = await lotteryContract.lotteryId();
+      expect(lotteryId).to.equal(0);
 
-      await lotteryContract.createLottery(ONE_ETHER);
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
 
-      num = await lotteryContract.lotteryId();
-      expect(num).to.equal(1);
+      lotteryId = await lotteryContract.lotteryId();
+      expect(lotteryId).to.equal(1);
     });
 
     it('should set the current id correctly', async () => {
-      await lotteryContract.createLottery(ONE_ETHER);
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
       const lottery = await lotteryContract.getLottery(1);
 
       expect(lottery.id).to.equal("1");
     });
 
     it('should have the correct required ticket price', async () => {
-      await lotteryContract.createLottery(ONE_ETHER);
-      const game = await lotteryContract.getLottery(1);
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const lottery = await lotteryContract.getLottery(1);
 
-      expect(game.ticket).to.equal(ONE_ETHER);
+      expect(lottery.ticket).to.equal(ONE_ETHER);
+    });
+
+    it('should have the correct required duration', async () => {
+      const transaction = await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const transactionReceipt = await transaction.wait();
+      const blockNumber = transactionReceipt.blockNumber;
+
+      const lottery = await lotteryContract.getLottery(1);
+
+      const timestamp = (await ethers.provider.getBlock(blockNumber)).timestamp;
+
+      expect(lottery.endTime).to.equal(timestamp + DURATION_IN_SECONDS);
     });
   })
 })
