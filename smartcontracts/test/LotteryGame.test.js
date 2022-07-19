@@ -61,5 +61,12 @@ describe('LotteryGame', () => {
 
       expect(lottery.endTime).to.equal(timestamp + DURATION_IN_SECONDS);
     });
+
+    it("should not have any participants at first", async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const lottery = await lotteryContract.getLottery(1);
+      expect(lottery.participants).to.be.an("array");
+      expect(lottery.participants).to.have.lengthOf(0);
+    });
   })
 })

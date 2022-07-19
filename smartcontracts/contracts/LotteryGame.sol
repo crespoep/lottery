@@ -12,6 +12,7 @@ contract LotteryGame {
     uint256 id;
     uint256 ticket;
     uint256 endTime;
+    address[] participants;
   }
 
   mapping(uint256 => Lottery) private lotteryById;
@@ -20,7 +21,8 @@ contract LotteryGame {
     uint256 _endTime = block.timestamp + _duration;
     lotteryId.increment();
     uint256 _currentId = lotteryId.current();
-    lotteryById[_currentId] = Lottery(_currentId,_ticket, _endTime);
+    address[] memory _participants = new address[](0);
+    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, _participants);
   }
 
   function getLottery(uint256 _lotteryId) external view returns(Lottery memory){
