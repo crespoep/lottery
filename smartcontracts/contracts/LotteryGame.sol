@@ -8,6 +8,8 @@ contract LotteryGame {
 
   Counters.Counter public lotteryId;
 
+  uint256[] public openLotteries;
+
   struct Lottery {
     uint256 id;
     uint256 ticket;
@@ -23,6 +25,11 @@ contract LotteryGame {
     uint256 _currentId = lotteryId.current();
     address[] memory _participants = new address[](0);
     lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, _participants);
+    openLotteries.push(_currentId);
+  }
+
+  function getOpenLotteriesIds() public view returns(uint256[] memory) {
+    return openLotteries;
   }
 
   function getLottery(uint256 _lotteryId) external view returns(Lottery memory){

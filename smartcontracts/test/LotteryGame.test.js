@@ -69,4 +69,19 @@ describe('LotteryGame', () => {
       expect(lottery.participants).to.have.lengthOf(0);
     });
   })
+
+  it('should return the correct open lotteries ids', async () => {
+    let openLotteriesIds = await lotteryContract.getOpenLotteriesIds();
+
+    expect(openLotteriesIds).to.be.an("array");
+    expect(openLotteriesIds).to.have.lengthOf(0);
+
+    await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+    openLotteriesIds = await lotteryContract.getOpenLotteriesIds()
+
+    expect(openLotteriesIds).to.be.an("array");
+    expect(openLotteriesIds).to.have.lengthOf(1);
+    expect(openLotteriesIds[0]).to.equal(1);
+  });
+
 })
