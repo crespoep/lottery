@@ -84,4 +84,21 @@ describe('LotteryGame', () => {
     expect(openLotteriesIds[0]).to.equal(1);
   });
 
+  describe('participation', () => {
+    it('should be reverted when trying to participate without exact payment', async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await expect(lotteryContract.participate(1))
+        .to.be.revertedWith("The ticket payment should be exact");
+      await expect(
+        lotteryContract.participate(1, {
+          value: ethers.utils.parseEther("1.1"),
+        })
+      ).to.be.revertedWith("The ticket payment should be exact");
+      await expect(
+        lotteryContract.participate(1, {
+          value: ethers.utils.parseEther("0.9"),
+        })
+      ).to.be.revertedWith("The ticket payment should be exact");
+    });
+  })
 })

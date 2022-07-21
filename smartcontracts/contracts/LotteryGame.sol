@@ -28,6 +28,11 @@ contract LotteryGame {
     openLotteries.push(_currentId);
   }
 
+  function participate(uint256 _lotteryId) external payable {
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    require(msg.value == _lottery.ticket, "The ticket payment should be exact");
+  }
+
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;
   }
