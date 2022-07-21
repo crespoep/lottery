@@ -130,4 +130,12 @@ describe('LotteryGame', () => {
       expect(lottery.jackpot).to.equal(ONE_ETHER);
     });
   })
+
+  describe("declare winner", async () => {
+    it("should be reverted if the finalization time has not come yet", async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await expect(lotteryContract.declareWinner(1))
+        .to.be.revertedWith("The lottery has not finished yet")
+    });
+  })
 })

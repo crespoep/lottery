@@ -37,6 +37,10 @@ contract LotteryGame {
     _lottery.jackpot += msg.value;
   }
 
+  function declareWinner(uint256 _lotteryId) external {
+    require(lotteryById[_lotteryId].endTime < block.timestamp, "The lottery has not finished yet");
+  }
+
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;
   }
