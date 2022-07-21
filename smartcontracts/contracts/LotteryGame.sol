@@ -30,6 +30,7 @@ contract LotteryGame {
 
   function participate(uint256 _lotteryId) external payable {
     Lottery memory _lottery = lotteryById[_lotteryId];
+    require(_lottery.id > 0, "The lottery does not exist");
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
   }
 

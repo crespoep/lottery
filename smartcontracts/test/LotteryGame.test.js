@@ -100,5 +100,10 @@ describe('LotteryGame', () => {
         })
       ).to.be.revertedWith("The ticket payment should be exact");
     });
+
+    it('should be reverted when trying to participate in an nonexistent lottery', async () => {
+      await expect(lotteryContract.participate(1))
+        .to.be.revertedWith("The lottery does not exist");
+    });
   })
 })
