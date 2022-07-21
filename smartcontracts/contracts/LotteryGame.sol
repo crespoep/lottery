@@ -20,6 +20,12 @@ contract LotteryGame {
 
   mapping(uint256 => Lottery) private lotteryById;
 
+  modifier lotteryExist(uint256 _lotteryId) {
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    require(_lottery.id > 0, "The lottery does not exist");
+    _;
+  }
+
   function createLottery(uint256 _ticket, uint256 _duration) public {
     uint256 _endTime = block.timestamp + _duration;
     lotteryId.increment();
@@ -29,18 +35,17 @@ contract LotteryGame {
     openLotteries.push(_currentId);
   }
 
-  function participate(uint256 _lotteryId) external payable {
+  function participate(uint256 _lotteryId) external lotteryExist(_lotteryId) payable {
     Lottery storage _lottery = lotteryById[_lotteryId];
-    require(_lottery.id > 0, "The lottery does not exist");
+
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
     _lottery.participants.push(msg.sender);
     _lottery.jackpot += msg.value;
   }
 
-  function declareWinner(uint256 _lotteryId) external view {
+  function declareWinner(uint256 _lotteryId) external lotteryExist(_lotteryId) view {
     Lottery memory _lottery = lotteryById[_lotteryId];
-    require(_lottery.id > 0, "The lottery does not exist");
-    require(lotteryById[_lotteryId].endTime < block.timestamp, "The lottery has not finished yet");
+    require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
   }
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
