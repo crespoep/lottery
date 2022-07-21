@@ -6,12 +6,16 @@ describe('LotteryGame', () => {
   const DURATION_IN_SECONDS = 60;
 
   let
+    deployer,
     LotteryGame,
     lotteryContract
   ;
 
   beforeEach(async () => {
     await deployments.fixture(["test"]);
+
+    [deployer] = await ethers.getSigners();
+
     LotteryGame = await deployments.get("LotteryGame");
     lotteryContract = await ethers.getContractAt("LotteryGame", LotteryGame.address);
   })
@@ -104,6 +108,14 @@ describe('LotteryGame', () => {
     it('should be reverted when trying to participate in an nonexistent lottery', async () => {
       await expect(lotteryContract.participate(1))
         .to.be.revertedWith("The lottery does not exist");
+    });
+
+    it("should add a new user to the lottery correctly", async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER };
+      await lotteryContract.participate(1, options);
+      const lottery = await lotteryContract.getLottery(1);
+      expect(lottery.participants[0]).to.equal(deployer.address);
     });
   })
 })
