@@ -1,5 +1,9 @@
+#Jetbrains
+.idea
 
 #Smart contract
 smartcontracts/node_modules
 smartcontracts/artifacts
 smartcontracts/cache
+
+
