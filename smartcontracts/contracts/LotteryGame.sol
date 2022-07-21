@@ -14,6 +14,7 @@ contract LotteryGame {
     uint256 id;
     uint256 ticket;
     uint256 endTime;
+    uint256 jackpot;
     address[] participants;
   }
 
@@ -24,7 +25,7 @@ contract LotteryGame {
     lotteryId.increment();
     uint256 _currentId = lotteryId.current();
     address[] memory _participants = new address[](0);
-    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, _participants);
+    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, 0, _participants);
     openLotteries.push(_currentId);
   }
 
@@ -33,6 +34,7 @@ contract LotteryGame {
     require(_lottery.id > 0, "The lottery does not exist");
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
     _lottery.participants.push(msg.sender);
+    _lottery.jackpot += msg.value;
   }
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {

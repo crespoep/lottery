@@ -117,5 +117,17 @@ describe('LotteryGame', () => {
       const lottery = await lotteryContract.getLottery(1);
       expect(lottery.participants[0]).to.equal(deployer.address);
     });
+
+    it("should increment the jackpot correctly", async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER };
+
+      let lottery = await lotteryContract.getLottery(1);
+      expect(lottery.jackpot).to.equal(0);
+
+      await lotteryContract.participate(1, options);
+      lottery = await lotteryContract.getLottery(1);
+      expect(lottery.jackpot).to.equal(ONE_ETHER);
+    });
   })
 })
