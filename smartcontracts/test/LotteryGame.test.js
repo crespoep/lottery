@@ -137,5 +137,10 @@ describe('LotteryGame', () => {
       await expect(lotteryContract.declareWinner(1))
         .to.be.revertedWith("The lottery has not finished yet")
     });
+
+    it("should be reverted if game that does not exist", async () => {
+      await expect(lotteryContract.declareWinner(1))
+        .to.be.revertedWith("The lottery does not exist");
+    });
   })
 })

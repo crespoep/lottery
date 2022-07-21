@@ -37,7 +37,9 @@ contract LotteryGame {
     _lottery.jackpot += msg.value;
   }
 
-  function declareWinner(uint256 _lotteryId) external {
+  function declareWinner(uint256 _lotteryId) external view {
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    require(_lottery.id > 0, "The lottery does not exist");
     require(lotteryById[_lotteryId].endTime < block.timestamp, "The lottery has not finished yet");
   }
 
