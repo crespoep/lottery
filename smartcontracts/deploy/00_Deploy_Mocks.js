@@ -2,11 +2,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deploy("LotteryGame", {
+  const linkTokenMock = await deploy("LinkToken", {
     from: deployer,
-    args: [],
     log: true,
   });
+
+  await deploy("VRFCoordinatorMock", {
+    from: deployer,
+    log: true,
+    args: [linkTokenMock.address],
+  });
+
 };
 
 module.exports.tags = ["all", "test"];

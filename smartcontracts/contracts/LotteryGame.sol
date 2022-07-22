@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract LotteryGame {
+contract LotteryGame is VRFConsumerBase {
   using Counters for Counters.Counter;
 
   Counters.Counter public lotteryId;
+
+  uint256 internal fee;
+
+  bytes32 internal keyHash;
 
   uint256[] public openLotteries;
 
@@ -20,10 +25,22 @@ contract LotteryGame {
 
   mapping(uint256 => Lottery) private lotteryById;
 
+  event WinnerRequested(bytes32);
+
   modifier lotteryExist(uint256 _lotteryId) {
     Lottery memory _lottery = lotteryById[_lotteryId];
     require(_lottery.id > 0, "The lottery does not exist");
     _;
+  }
+
+  constructor(
+    address _vrfCoordinatorAddress,
+    address _linkAddress,
+    bytes32 _keyHash,
+    uint256 _fee
+  ) VRFConsumerBase (_vrfCoordinatorAddress, _linkAddress) {
+    keyHash = _keyHash;
+    fee = _fee;
   }
 
   function createLottery(uint256 _ticket, uint256 _duration) public {
@@ -43,10 +60,15 @@ contract LotteryGame {
     _lottery.jackpot += msg.value;
   }
 
-  function declareWinner(uint256 _lotteryId) external lotteryExist(_lotteryId) view {
+  function declareWinner(uint256 _lotteryId) external lotteryExist(_lotteryId) {
     Lottery memory _lottery = lotteryById[_lotteryId];
     require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
+
+    bytes32 requestId = requestRandomness(keyHash, fee);
+    emit WinnerRequested(requestId);
   }
+
+  function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {}
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;

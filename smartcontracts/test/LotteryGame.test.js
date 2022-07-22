@@ -1,6 +1,14 @@
 const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
 
+const prepareForFundingWithLink =
+  (contractAddress, linkTokenAddress) => async () => {
+    await hre.run("fund-link", {
+      contract: contractAddress,
+      linkaddress: linkTokenAddress,
+    });
+  };
+
 describe('LotteryGame', () => {
   const ONE_ETHER = ethers.constants.WeiPerEther;
   const DURATION_IN_SECONDS = 60;
@@ -8,7 +16,12 @@ describe('LotteryGame', () => {
   let
     deployer,
     LotteryGame,
-    lotteryContract
+    lotteryContract,
+    LinkToken,
+    linkTokenContract,
+    VRFCoordinator,
+    vrfCoordinatorContract,
+    fundWithLink
   ;
 
   beforeEach(async () => {
@@ -17,7 +30,17 @@ describe('LotteryGame', () => {
     [deployer] = await ethers.getSigners();
 
     LotteryGame = await deployments.get("LotteryGame");
+    LinkToken = await deployments.get("LinkToken");
+    VRFCoordinator = await deployments.get("VRFCoordinatorMock");
+
     lotteryContract = await ethers.getContractAt("LotteryGame", LotteryGame.address);
+    linkTokenContract = await ethers.getContractAt("LinkToken", LinkToken.address);
+    vrfCoordinatorContract = await ethers.getContractAt("VRFCoordinatorMock", VRFCoordinator.address);
+
+    fundWithLink = prepareForFundingWithLink(
+      lotteryContract.address,
+      linkTokenContract.address
+    );
   })
 
   it('is deployed successfully', async () => {
@@ -141,6 +164,20 @@ describe('LotteryGame', () => {
     it("should be reverted if game that does not exist", async () => {
       await expect(lotteryContract.declareWinner(1))
         .to.be.revertedWith("The lottery does not exist");
+    });
+
+    it('requests a random number to the VRF coordinator', async () => {
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+
+      await ethers.provider.send("evm_increaseTime", [DURATION_IN_SECONDS]);
+      await ethers.provider.send("evm_mine");
+
+      await expect(lotteryContract.declareWinner(1))
+        .to.emit(lotteryContract, "WinnerRequested")
     });
   })
 })
