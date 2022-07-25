@@ -120,6 +120,8 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     (bool success, ) = _winner.call{ value: _lottery.jackpot }("");
     require(success, "Transfer to winner failed");
 
+    _lottery.state = State.WINNER_DECLARED;
+
     emit WinnerDeclared(_lotteryId, _winner);
 
     delete lotteryIdByRequestId[requestId];

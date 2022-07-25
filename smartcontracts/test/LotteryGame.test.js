@@ -309,8 +309,32 @@ describe('LotteryGame', () => {
       );
     });
 
-    it('', async () => {
-      
+    it('changes lottery state to WINNER_DECLARED when there is a winner', async () => {
+      const RANDOM_NUMBER = 5;
+
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      let tx = await lotteryContract.declareWinner(1)
+      let receipt = await tx.wait()
+
+      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const requestId = event.args.requestId
+
+      await expect(await vrfCoordinatorContract.callBackWithRandomness(
+        requestId,
+        RANDOM_NUMBER,
+        lotteryContract.address
+      ))
+
+      const lottery = await lotteryContract.getLottery(1);
+      expect(lottery.state).to.equal(2)
     });
   })
 
