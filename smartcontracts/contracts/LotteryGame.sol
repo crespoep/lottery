@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "hardhat/console.sol";
 
 contract LotteryGame is VRFConsumerBase {
   using Counters for Counters.Counter;
@@ -20,12 +21,20 @@ contract LotteryGame is VRFConsumerBase {
     uint256 ticket;
     uint256 endTime;
     uint256 jackpot;
+    address winner;
     address[] participants;
   }
 
   mapping(uint256 => Lottery) private lotteryById;
 
-  event WinnerRequested(bytes32);
+  mapping(bytes32 => uint256) private lotteryIdByRequestId;
+
+  event WinnerRequested(bytes32 indexed requestId);
+
+  event WinnerDeclared(
+    uint256 indexed lotteryId,
+    address indexed winner
+  );
 
   modifier lotteryExist(uint256 _lotteryId) {
     Lottery memory _lottery = lotteryById[_lotteryId];
@@ -48,7 +57,7 @@ contract LotteryGame is VRFConsumerBase {
     lotteryId.increment();
     uint256 _currentId = lotteryId.current();
     address[] memory _participants = new address[](0);
-    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, 0, _participants);
+    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, 0, address(0), _participants);
     openLotteries.push(_currentId);
   }
 
@@ -65,10 +74,19 @@ contract LotteryGame is VRFConsumerBase {
     require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
 
     bytes32 requestId = requestRandomness(keyHash, fee);
+    lotteryIdByRequestId[requestId] = _lotteryId;
     emit WinnerRequested(requestId);
   }
 
-  function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {}
+  function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+    uint256 _lotteryId = lotteryIdByRequestId[requestId];
+    Lottery storage _lottery = lotteryById[_lotteryId];
+    address[] memory _participants = _lottery.participants;
+    address _winner = _participants[randomness % _participants.length];
+    _lottery.winner = _winner;
+
+    emit WinnerDeclared(_lotteryId, _winner);
+  }
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;

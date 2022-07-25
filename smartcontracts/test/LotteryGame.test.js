@@ -15,6 +15,7 @@ describe('LotteryGame', () => {
 
   let
     deployer,
+    user1,
     LotteryGame,
     lotteryContract,
     LinkToken,
@@ -27,7 +28,7 @@ describe('LotteryGame', () => {
   beforeEach(async () => {
     await deployments.fixture(["test"]);
 
-    [deployer] = await ethers.getSigners();
+    [deployer, user1] = await ethers.getSigners();
 
     LotteryGame = await deployments.get("LotteryGame");
     LinkToken = await deployments.get("LinkToken");
@@ -178,6 +179,38 @@ describe('LotteryGame', () => {
 
       await expect(lotteryContract.declareWinner(1))
         .to.emit(lotteryContract, "WinnerRequested")
+    });
+
+    it('selects a winner', async () => {
+      const RANDOM_NUMBER = 5;
+
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await ethers.provider.send("evm_increaseTime", [DURATION_IN_SECONDS]);
+      await ethers.provider.send("evm_mine");
+
+      let tx = await lotteryContract.declareWinner(1)
+      let receipt = await tx.wait()
+
+      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const requestId = event.args.requestId
+
+      await expect(vrfCoordinatorContract.callBackWithRandomness(
+        requestId,
+        RANDOM_NUMBER,
+        lotteryContract.address
+      )).to.emit(
+        lotteryContract,
+        "WinnerDeclared"
+      ).withArgs(1, user1.address);
+
+      const lottery = await lotteryContract.getLottery(1)
+      expect(lottery.winner).to.equal(user1.address)
     });
   })
 })
