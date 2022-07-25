@@ -2,11 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
+import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-contract LotteryGame is VRFConsumerBase, Ownable {
+contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   using Counters for Counters.Counter;
 
   Counters.Counter public lotteryId;
@@ -85,7 +86,7 @@ contract LotteryGame is VRFConsumerBase, Ownable {
     Lottery storage _lottery = lotteryById[_lotteryId];
 
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
-    
+
     _lottery.participants.push(msg.sender);
     _lottery.jackpot += msg.value;
   }
@@ -113,6 +114,24 @@ contract LotteryGame is VRFConsumerBase, Ownable {
 
     delete lotteryIdByRequestId[requestId];
   }
+
+  function checkUpkeep(bytes calldata) external view override returns (bool, bytes memory) {
+    bool upkeepNeeded = false;
+    bytes memory data = bytes("");
+
+    for (uint256 i = 0; i < openLotteries.length; i++) {
+      uint256 _lotteryId = openLotteries[i];
+      Lottery memory _lottery = lotteryById[_lotteryId];
+
+      if (_lottery.endTime < block.timestamp) {
+        upkeepNeeded = true;
+      }
+    }
+
+    return (upkeepNeeded, data);
+  }
+
+  function performUpkeep(bytes calldata performData) external override {}
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;

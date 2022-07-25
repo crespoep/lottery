@@ -272,4 +272,33 @@ describe('LotteryGame', () => {
       );
     });
   })
+
+  describe("keeper", async () => {
+    it('checkUpkeep should return false when there is no open lotteries', async () => {
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))[0]
+      expect(upkeepNeeded).to.be.false
+    });
+
+    it('checkUpkeep should return false when there is an open lottery but the end time has not come yet', async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))[0]
+      expect(upkeepNeeded).to.be.false
+    });
+
+    it('checkUpkeep should return true when there is an open lottery and the end time has come', async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))[0]
+      expect(upkeepNeeded).to.be.true
+    });
+  })
 })
