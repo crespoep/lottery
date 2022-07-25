@@ -9,6 +9,11 @@ const prepareForFundingWithLink =
     });
   };
 
+const increaseTime = async (seconds) => {
+  await ethers.provider.send("evm_increaseTime", [seconds]);
+  await ethers.provider.send("evm_mine");
+}
+
 describe('LotteryGame', () => {
   const ONE_ETHER = ethers.constants.WeiPerEther;
   const DURATION_IN_SECONDS = 60;
@@ -174,8 +179,7 @@ describe('LotteryGame', () => {
       const options = { value: ONE_ETHER }
       await lotteryContract.participate(1, options);
 
-      await ethers.provider.send("evm_increaseTime", [DURATION_IN_SECONDS]);
-      await ethers.provider.send("evm_mine");
+      await increaseTime(DURATION_IN_SECONDS);
 
       await expect(lotteryContract.declareWinner(1))
         .to.emit(lotteryContract, "WinnerRequested")
@@ -191,8 +195,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await ethers.provider.send("evm_increaseTime", [DURATION_IN_SECONDS]);
-      await ethers.provider.send("evm_mine");
+      await increaseTime(DURATION_IN_SECONDS);
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
