@@ -160,6 +160,13 @@ describe('LotteryGame', () => {
         .to.be.revertedWith("The lottery does not exist");
     });
 
+    it('should be reverted when users try to participate twice', async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER };
+      await lotteryContract.participate(1, options);
+      await expect(lotteryContract.participate(1, options)).to.be.revertedWith("User already participated")
+    });
+
     it("should add a new user to the lottery correctly", async () => {
       await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
       const options = { value: ONE_ETHER };

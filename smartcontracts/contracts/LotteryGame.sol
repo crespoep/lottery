@@ -43,6 +43,18 @@ contract LotteryGame is VRFConsumerBase, Ownable {
     _;
   }
 
+  modifier notParticipated(uint256 _lotteryId) {
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    address[] memory participants = _lottery.participants;
+    address user = msg.sender;
+    for (uint256 i = 0; i < participants.length; i++) {
+      if (user == participants[i]) {
+        revert("User already participated");
+      }
+    }
+    _;
+  }
+
   constructor(
     address _vrfCoordinatorAddress,
     address _linkAddress,
@@ -65,10 +77,15 @@ contract LotteryGame is VRFConsumerBase, Ownable {
     openLotteries.push(_currentId);
   }
 
-  function participate(uint256 _lotteryId) external lotteryExist(_lotteryId) payable {
+  function participate(uint256 _lotteryId)
+    external payable
+    lotteryExist(_lotteryId)
+    notParticipated(_lotteryId)
+  {
     Lottery storage _lottery = lotteryById[_lotteryId];
 
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
+    
     _lottery.participants.push(msg.sender);
     _lottery.jackpot += msg.value;
   }
