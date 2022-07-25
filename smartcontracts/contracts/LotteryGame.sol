@@ -18,6 +18,8 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
 
   uint256[] public openLotteries;
 
+  enum State { OPEN, CLOSED, WINNER_DECLARED }
+
   struct Lottery {
     uint256 id;
     uint256 ticket;
@@ -25,6 +27,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     uint256 jackpot;
     address winner;
     address[] participants;
+    State state;
   }
 
   mapping(uint256 => Lottery) private lotteryById;
@@ -77,7 +80,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     lotteryId.increment();
     uint256 _currentId = lotteryId.current();
     address[] memory _participants = new address[](0);
-    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, 0, address(0), _participants);
+    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, 0, address(0), _participants, State.OPEN);
     openLotteries.push(_currentId);
   }
 
@@ -95,11 +98,14 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   }
 
   function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
-    Lottery memory _lottery = lotteryById[_lotteryId];
+    Lottery storage _lottery = lotteryById[_lotteryId];
     require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
 
     bytes32 requestId = requestRandomness(keyHash, fee);
     lotteryIdByRequestId[requestId] = _lotteryId;
+
+    _lottery.state = State.CLOSED;
+
     emit WinnerRequested(_lotteryId, requestId);
   }
 
@@ -126,7 +132,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
       uint256 _lotteryId = openLotteries[i];
       Lottery memory _lottery = lotteryById[_lotteryId];
 
-      if (_lottery.endTime < block.timestamp) {
+      if (_lottery.endTime < block.timestamp && _lottery.state == State.OPEN) {
         upkeepNeeded = true;
         data = abi.encode(_lotteryId);
       }

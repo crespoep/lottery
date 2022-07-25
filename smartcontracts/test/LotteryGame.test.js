@@ -122,6 +122,12 @@ describe('LotteryGame', () => {
       expect(lottery.participants).to.be.an("array");
       expect(lottery.participants).to.have.lengthOf(0);
     });
+
+    it('should have open state', async () => {
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const lottery = await lotteryContract.getLottery(1);
+      expect(lottery.state).to.equal(0);
+    });
   })
 
   it('should return the correct open lotteries ids', async () => {
@@ -213,6 +219,21 @@ describe('LotteryGame', () => {
         .to.emit(lotteryContract, "WinnerRequested")
     });
 
+    it('changes lottery state to closed', async () => {
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      await lotteryContract.declareWinner(1);
+
+      const lottery = await lotteryContract.getLottery(1);
+      expect(lottery.state).to.equal(1)
+    });
+
     it('selects a winner', async () => {
       const RANDOM_NUMBER = 5;
 
@@ -273,7 +294,7 @@ describe('LotteryGame', () => {
     });
   })
 
-  describe.only("keeper", async () => {
+  describe("keeper", async () => {
     it('checkUpkeep should return false when there is no open lotteries', async () => {
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -321,6 +342,27 @@ describe('LotteryGame', () => {
 
       await expect(lotteryContract.performUpkeep(upkeepNeeded[1]))
         .to.emit(lotteryContract, "WinnerRequested")
+    });
+
+    it('checkUpkeep should return false for a lottery if its end time has come but its state is closed', async () => {
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      let upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      await expect(upkeepNeeded[0]).to.be.true
+
+      await expect(lotteryContract.performUpkeep(upkeepNeeded[1]))
+
+      upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      await expect(upkeepNeeded[0]).to.be.false
     });
   })
 })
