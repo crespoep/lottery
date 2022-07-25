@@ -84,6 +84,8 @@ contract LotteryGame is VRFConsumerBase {
     address[] memory _participants = _lottery.participants;
     address _winner = _participants[randomness % _participants.length];
     _lottery.winner = _winner;
+    (bool success, ) = _winner.call{ value: _lottery.jackpot }("");
+    require(success, "Transfer to winner failed");
 
     emit WinnerDeclared(_lotteryId, _winner);
   }

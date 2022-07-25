@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
+const {BigNumber} = require("ethers");
 
 const prepareForFundingWithLink =
   (contractAddress, linkTokenAddress) => async () => {
@@ -214,6 +215,34 @@ describe('LotteryGame', () => {
 
       const lottery = await lotteryContract.getLottery(1)
       expect(lottery.winner).to.equal(user1.address)
+    });
+
+    it('transfer the jackpot to the winner', async () => {
+      const RANDOM_NUMBER = 5;
+
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      let tx = await lotteryContract.declareWinner(1)
+      let receipt = await tx.wait()
+
+      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const requestId = event.args.requestId
+
+      await expect(await vrfCoordinatorContract.callBackWithRandomness(
+        requestId,
+        RANDOM_NUMBER,
+        lotteryContract.address
+      )).to.changeEtherBalance(
+        user1,
+        ONE_ETHER.mul(2)
+      );
     });
   })
 })
