@@ -273,10 +273,12 @@ describe('LotteryGame', () => {
     });
   })
 
-  describe("keeper", async () => {
+  describe.only("keeper", async () => {
     it('checkUpkeep should return false when there is no open lotteries', async () => {
-      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))[0]
-      expect(upkeepNeeded).to.be.false
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      expect(upkeepNeeded[0]).to.be.false
+      expect(upkeepNeeded[1]).to.equal("0x");
     });
 
     it('checkUpkeep should return false when there is an open lottery but the end time has not come yet', async () => {
@@ -285,11 +287,13 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))[0]
-      expect(upkeepNeeded).to.be.false
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      expect(upkeepNeeded[0]).to.be.false
+      expect(upkeepNeeded[1]).to.equal("0x");
     });
 
-    it('checkUpkeep should return true when there is an open lottery and the end time has come', async () => {
+    it('checkUpkeep should return true and lottery id when there is an open lottery and the end time has come', async () => {
       await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
       const options = { value: ONE_ETHER }
       await lotteryContract.participate(1, options);
@@ -297,8 +301,10 @@ describe('LotteryGame', () => {
 
       await increaseTime(DURATION_IN_SECONDS);
 
-      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))[0]
-      expect(upkeepNeeded).to.be.true
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      expect(upkeepNeeded[0]).to.be.true
+      expect(BigNumber.from(upkeepNeeded[1])).to.equal("1");
     });
   })
 })

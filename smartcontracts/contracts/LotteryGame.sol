@@ -125,6 +125,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
 
       if (_lottery.endTime < block.timestamp) {
         upkeepNeeded = true;
+        data = abi.encode(_lotteryId);
       }
     }
 
