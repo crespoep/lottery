@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-contract LotteryGame is VRFConsumerBase {
+contract LotteryGame is VRFConsumerBase, Ownable {
   using Counters for Counters.Counter;
 
   Counters.Counter public lotteryId;
@@ -52,7 +53,10 @@ contract LotteryGame is VRFConsumerBase {
     fee = _fee;
   }
 
-  function createLottery(uint256 _ticket, uint256 _duration) public {
+  function createLottery(uint256 _ticket, uint256 _duration) public onlyOwner {
+    require(_ticket > 0, "Ticket price must be greater than zero");
+    require(_duration >= 60, "Lottery duration cannot be less than a minute");
+
     uint256 _endTime = block.timestamp + _duration;
     lotteryId.increment();
     uint256 _currentId = lotteryId.current();
@@ -84,10 +88,13 @@ contract LotteryGame is VRFConsumerBase {
     address[] memory _participants = _lottery.participants;
     address _winner = _participants[randomness % _participants.length];
     _lottery.winner = _winner;
+
     (bool success, ) = _winner.call{ value: _lottery.jackpot }("");
     require(success, "Transfer to winner failed");
 
     emit WinnerDeclared(_lotteryId, _winner);
+
+    delete lotteryIdByRequestId[requestId];
   }
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {

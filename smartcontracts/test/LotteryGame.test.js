@@ -60,6 +60,26 @@ describe('LotteryGame', () => {
   });
 
   describe('game creation', async () => {
+    it('should be reverted if ticket price is not greater than zero', async () => {
+      const invalidTicketPrice = 0;
+      await expect(
+        lotteryContract.createLottery(invalidTicketPrice, DURATION_IN_SECONDS)
+      ).to.be.revertedWith("Ticket price must be greater than zero");
+    });
+
+    it('should be reverted if duration is less than 60 seconds', async () => {
+      const invalidDuration = 50;
+      await expect(
+        lotteryContract.createLottery(ONE_ETHER, invalidDuration)
+      ).to.be.revertedWith("Lottery duration cannot be less than a minute");
+    });
+
+    it('should be reverted if anyone other than the admin tries to create a lottery', async () => {
+      await expect(
+        lotteryContract.connect(user1).createLottery(ONE_ETHER, DURATION_IN_SECONDS)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
     it('increments the number of games', async () => {
       let lotteryId = await lotteryContract.lotteryId();
       expect(lotteryId).to.equal(0);
