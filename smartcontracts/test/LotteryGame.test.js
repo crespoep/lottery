@@ -173,6 +173,22 @@ describe('LotteryGame', () => {
       await expect(lotteryContract.participate(1, options)).to.be.revertedWith("User already participated")
     });
 
+    it('should be reverted when users try to participate if lottery is not open anymore', async () => {
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER };
+      await lotteryContract.participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      await lotteryContract.declareWinner(1)
+
+      await expect(
+        lotteryContract.connect(user1).participate(1, options)
+      ).to.be.revertedWith("Lottery is closed to new participants");
+    });
+
     it("should add a new user to the lottery correctly", async () => {
       await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
       const options = { value: ONE_ETHER };
@@ -291,6 +307,10 @@ describe('LotteryGame', () => {
         user1,
         ONE_ETHER.mul(2)
       );
+    });
+
+    it('', async () => {
+      
     });
   })
 
