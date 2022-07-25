@@ -306,5 +306,21 @@ describe('LotteryGame', () => {
       expect(upkeepNeeded[0]).to.be.true
       expect(BigNumber.from(upkeepNeeded[1])).to.equal("1");
     });
+
+    it('performUpkeep should call declare winner if conditions are met', async () => {
+      await fundWithLink();
+
+      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const options = { value: ONE_ETHER }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await increaseTime(DURATION_IN_SECONDS);
+
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      await expect(lotteryContract.performUpkeep(upkeepNeeded[1]))
+        .to.emit(lotteryContract, "WinnerRequested")
+    });
   })
 })

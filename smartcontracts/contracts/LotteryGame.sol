@@ -31,7 +31,10 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
 
   mapping(bytes32 => uint256) private lotteryIdByRequestId;
 
-  event WinnerRequested(bytes32 indexed requestId);
+  event WinnerRequested(
+    uint256 indexed lotteryId,
+    bytes32 indexed requestId
+  );
 
   event WinnerDeclared(
     uint256 indexed lotteryId,
@@ -91,13 +94,13 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     _lottery.jackpot += msg.value;
   }
 
-  function declareWinner(uint256 _lotteryId) external lotteryExist(_lotteryId) {
+  function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
     Lottery memory _lottery = lotteryById[_lotteryId];
     require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
 
     bytes32 requestId = requestRandomness(keyHash, fee);
     lotteryIdByRequestId[requestId] = _lotteryId;
-    emit WinnerRequested(requestId);
+    emit WinnerRequested(_lotteryId, requestId);
   }
 
   function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
@@ -132,7 +135,13 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     return (upkeepNeeded, data);
   }
 
-  function performUpkeep(bytes calldata performData) external override {}
+  function performUpkeep(bytes calldata performData) external override {
+    uint256 _lotteryId = abi.decode(performData, (uint256));
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    if (_lottery.endTime < block.timestamp) {
+      declareWinner(_lotteryId);
+    }
+  }
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;
