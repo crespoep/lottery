@@ -3,8 +3,10 @@ import { ethers } from "ethers";
 import logo from "../eth-logo.png";
 import contractAddress from "../contracts/contract-address.json";
 import LotteryArtifact from "../contracts/LotteryGame.json";
+import {useOutletContext} from "react-router-dom";
 
 const LotteryList = () => {
+  const [ account ] = useOutletContext()
   const [ lotteryContract, setLotteryContract ] = useState(null)
   const [ lotteries, setLotteries ] = useState([])
 
@@ -36,6 +38,25 @@ const LotteryList = () => {
     getNumber()
   }, [lotteryContract])
 
+  const participate = async (id, ticket) => {
+    const { ethereum } = window;
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner()
+    await lotteryContract.connect(signer).participate(
+      parseInt(id),
+      {
+        value: ticket.toString(),
+      }
+    )
+  }
+
+  const hasParticipated = participants => {
+    if (account) {
+      console.log(account, participants)
+      return participants.includes(ethers.utils.getAddress(account))
+    }
+  }
+
   return (
     <div className="my-6">
       <h2 className="text-white text-center text-3xl">Available lotteries</h2>
@@ -44,7 +65,11 @@ const LotteryList = () => {
           lotteries.map(
             lottery =>
               <div key={lottery.id.toNumber()}>
-                <Lottery {...lottery} />
+                <Lottery
+                  {...lottery}
+                  hasParticipated={hasParticipated(lottery.participants)}
+                  participate={participate}
+                />
               </div>
             )
         }
@@ -59,12 +84,18 @@ const Lottery = ({
   jackpot,
   participants,
   endTime,
-  state
+  state,
+  participate,
+  hasParticipated
 }) => {
   const formatToEther = number => ethers.utils.formatEther(number)
 
   const getDate = finalizationTime =>
     (new Date(finalizationTime.toNumber() * 1000)).toTimeString()
+
+  const participateWithId = () => {
+    participate(id, ticket)
+  }
 
   return (
     <div
@@ -85,18 +116,18 @@ const Lottery = ({
             Ticket price:
             <span className="text-white">{ formatToEther(ticket) } ETH</span></li>
         </ul>
-
-        {/*<div>{ id.toNumber()}</div>*/}
-        {/*<div>{ jackpot.toNumber()}</div>*/}
-        {/*<div>{ ethers.utils.formatEther(ticket)}</div>*/}
-        {/*<div>*/}
-        {/*  {*/}
-        {/*    participants.map(p => <div>{ p }</div>)*/}
-        {/*  }*/}
-        {/*</div>*/}
-        {/*<div>{ getDate(endTime) }</div>*/}
-        {/*<div>{ state }</div>*/}
       </div>
+      {
+        hasParticipated
+          ? <div className="text-2xl p-3 mx-auto">You already participated !</div>
+          : <button
+            type="button"
+            className="border-2 border-light-green text-2xl p-3 mx-auto w-40 button-shadow block"
+            onClick={participateWithId}
+          >
+            Participate
+          </button>
+      }
     </div>
   )
 }

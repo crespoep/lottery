@@ -10,7 +10,7 @@ function App() {
     <div className="text-light-green w-11/12 m-auto grandient">
       <Header account={account} setAccount={setAccount} balance={balance} setBalance={setBalance} />
       <div className="container">
-        <Outlet />
+        <Outlet context={[ account ]} />
       </div>
     </div>
   );
