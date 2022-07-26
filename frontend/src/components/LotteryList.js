@@ -29,7 +29,6 @@ const LotteryList = () => {
           async (id) => await lotteryContract.getLottery(id)
         ))
 
-        console.log(lotteries)
         setLotteries(lotteries)
       }
     }

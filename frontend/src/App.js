@@ -1,7 +1,7 @@
 import { useState } from "react";
-import './App.css';
-import LotteryList from "./components/LotteryList";
 import Header from "./components/Header";
+import { Outlet } from "react-router-dom";
+import './App.css';
 
 function App() {
   const [ account, setAccount ] = useState(null)
@@ -9,7 +9,7 @@ function App() {
   return (
     <div className="App">
       <Header account={account} setAccount={setAccount} />
-      <LotteryList />
+      <Outlet />
     </div>
   );
 }
