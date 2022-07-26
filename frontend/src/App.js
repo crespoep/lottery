@@ -6,12 +6,9 @@ import Header from "./components/Header";
 function App() {
   const [ account, setAccount ] = useState(null)
 
-
-
   return (
     <div className="App">
       <Header account={account} setAccount={setAccount} />
-
       <LotteryList />
     </div>
   );
