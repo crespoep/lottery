@@ -1,4 +1,3 @@
-import {lotteries} from "../lotteries";
 import {useEffect, useState} from "react";
 import { ethers } from "ethers";
 import contractAddress from "../contracts/contract-address.json";
@@ -24,7 +23,13 @@ const LotteryList = () => {
   useEffect(() => {
     const getNumber = async () => {
       if (lotteryContract) {
-        const lotteries = await lotteryContract.getOpenLotteriesIds()
+        const lotteriesIds = await lotteryContract.getOpenLotteriesIds()
+
+        const lotteries = await Promise.all(lotteriesIds.map(
+          async (id) => await lotteryContract.getLottery(id)
+        ))
+
+        console.log(lotteries)
         setLotteries(lotteries)
       }
     }
@@ -38,12 +43,32 @@ const LotteryList = () => {
         {
           lotteries.map(
             lottery =>
-              <div key={lottery.id}>
-                { lottery.id }
+              <div key={lottery.id.toNumber()}>
+                <Lottery lottery={lottery} />
               </div>
             )
         }
       </div>
+    </div>
+  )
+}
+
+const Lottery = ({ lottery }) => {
+  const getDate = finalizationTime =>
+    (new Date(finalizationTime.toNumber() * 1000)).toTimeString()
+
+  return (
+    <div>
+      <div>{ lottery.id.toNumber()}</div>
+      <div>{ lottery.jackpot.toNumber()}</div>
+      <div>{ ethers.utils.formatEther(lottery.ticket)}</div>
+      <div>
+        {
+          lottery.participants.map(p => <div>{ p }</div>)
+        }
+      </div>
+      <div>{ getDate(lottery.endTime) }</div>
+      <div>{ lottery.state }</div>
     </div>
   )
 }
