@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy");
 require("@appliedblockchain/chainlink-plugins-fund-link");
+require("./tasks/createLottery");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
