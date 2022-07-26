@@ -80,7 +80,17 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     lotteryId.increment();
     uint256 _currentId = lotteryId.current();
     address[] memory _participants = new address[](0);
-    lotteryById[_currentId] = Lottery(_currentId, _ticket, _endTime, 0, address(0), _participants, State.OPEN);
+
+    lotteryById[_currentId] = Lottery({
+      id: _currentId,
+      ticket: _ticket,
+      endTime: _endTime,
+      jackpot: 0,
+      winner: address(0),
+      participants: _participants,
+      state: State.OPEN
+    });
+
     openLotteries.push(_currentId);
   }
 
@@ -123,6 +133,15 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
     require(success, "Transfer to winner failed");
 
     _lottery.state = State.WINNER_DECLARED;
+
+    for (uint256 i = 0; i < openLotteries.length; i++) {
+      uint256 _openLotteryId = openLotteries[i];
+      Lottery memory _openLottery = lotteryById[_openLotteryId];
+      if (_lotteryId == _openLottery.id) {
+        openLotteries[i] = openLotteries[openLotteries.length - 1];
+        openLotteries.pop();
+      }
+    }
 
     emit WinnerDeclared(_lotteryId, _winner);
 

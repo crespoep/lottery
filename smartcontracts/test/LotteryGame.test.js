@@ -294,6 +294,41 @@ describe('LotteryGame', () => {
       expect(lottery.winner).to.equal(user1.address)
     });
 
+    it('', async () => {
+      const RANDOM_NUMBER = 5;
+
+      await fundWithLink();
+
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION * 2)
+
+      const options = { value: TICKET_PRICE }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await helpers.time.increase(DURATION)
+
+      let openLotteriesIds = await lotteryContract.getOpenLotteriesIds()
+      expect(openLotteriesIds).to.have.lengthOf(2);
+      expect(openLotteriesIds.map(val => val.toNumber())).deep.to.equal([1, 2])
+
+      let tx = await lotteryContract.declareWinner(1)
+      let receipt = await tx.wait()
+
+      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const requestId = event.args.requestId
+
+      await expect(vrfCoordinatorContract.callBackWithRandomness(
+        requestId,
+        RANDOM_NUMBER,
+        lotteryContract.address
+      ))
+
+      openLotteriesIds = await lotteryContract.getOpenLotteriesIds()
+      expect(openLotteriesIds).to.have.lengthOf(1);
+      expect(openLotteriesIds.map(val => val.toNumber())).deep.to.equal([2])
+    });
+
     it('transfer the jackpot to the winner', async () => {
       const RANDOM_NUMBER = 5;
 
