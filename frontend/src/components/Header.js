@@ -8,11 +8,8 @@ const Header = ({
   balance,
   setBalance
 }) => {
-  const connectWallet = async () => {
+  const getEtherBalance = async (account) => {
     const { ethereum } = window;
-    const [ account ] = await ethereum.request({ method: 'eth_requestAccounts' });
-    setAccount(account)
-
     const hexEthBalance = await ethereum.request({
       method: "eth_getBalance",
       params: [account, "latest"]
@@ -20,19 +17,22 @@ const Header = ({
 
     let ethBalance = ethers.utils.formatEther(BigNumber.from(hexEthBalance));
     ethBalance = (+ethBalance).toFixed(4);
+
     setBalance(ethBalance);
+  }
+
+  const connectWallet = async () => {
+    const { ethereum } = window;
+    const [ account ] = await ethereum.request({ method: 'eth_requestAccounts' });
+    setAccount(account)
+
+    await getEtherBalance(account)
 
     ethereum.on("accountsChanged", async (accounts) => {
       const newAccount = accounts[0];
       setAccount(newAccount);
 
-      const newHexBalance = await ethereum.request({
-        method: 'eth_getBalance',
-        params: [newAccount, 'latest']
-      })
-      let newEthBalance = ethers.utils.formatEther(BigNumber.from(newHexBalance))
-      newEthBalance = (+newEthBalance).toFixed(4);
-      setBalance(newEthBalance)
+      await getEtherBalance(newAccount)
     })
   }
 
@@ -42,7 +42,7 @@ const Header = ({
       <Navbar />
       {
         account
-          ? <div>{ account }</div>
+          ? <div>{ account } - { balance }</div>
           : <button id="connectWallet" onClick={connectWallet}>Connect wallet</button>
       }
     </header>
