@@ -14,6 +14,8 @@ const prepareForFundingWithLink =
 describe('LotteryGame', () => {
   const TICKET_PRICE = ethers.constants.WeiPerEther;
   const DURATION = 60;
+  const RANDOM_NUMBER_EXAMPLE = 5;
+  const OPTIONS = { value: TICKET_PRICE };
 
   let
     deployer,
@@ -164,43 +166,40 @@ describe('LotteryGame', () => {
 
     it('should be reverted when users try to participate twice', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE };
-      await lotteryContract.participate(1, options);
-      await expect(lotteryContract.participate(1, options)).to.be.revertedWith("User already participated")
+      await lotteryContract.participate(1, OPTIONS);
+      await expect(lotteryContract.participate(1, OPTIONS)).to.be.revertedWith("User already participated")
     });
 
     it('should be reverted when users try to participate if lottery is not open anymore', async () => {
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE };
-      await lotteryContract.participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
       await lotteryContract.declareWinner(1)
 
       await expect(
-        lotteryContract.connect(user1).participate(1, options)
+        lotteryContract.connect(user1).participate(1, OPTIONS)
       ).to.be.revertedWith("Lottery is closed to new participants");
     });
 
     it("should add a new user to the lottery correctly", async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE };
-      await lotteryContract.participate(1, options);
+
+      await lotteryContract.participate(1, OPTIONS);
       const lottery = await lotteryContract.getLottery(1);
       expect(lottery.participants[0]).to.equal(deployer.address);
     });
 
     it("should increment the jackpot correctly", async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE };
 
       let lottery = await lotteryContract.getLottery(1);
       expect(lottery.jackpot).to.equal(0);
 
-      await lotteryContract.participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
       lottery = await lotteryContract.getLottery(1);
       expect(lottery.jackpot).to.equal(TICKET_PRICE);
     });
@@ -224,10 +223,8 @@ describe('LotteryGame', () => {
 
     it('should be reverted if contract does not have enough LINK', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -239,8 +236,7 @@ describe('LotteryGame', () => {
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -252,8 +248,7 @@ describe('LotteryGame', () => {
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -264,14 +259,11 @@ describe('LotteryGame', () => {
     });
 
     it('selects a winner', async () => {
-      const RANDOM_NUMBER = 5;
-
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -283,7 +275,7 @@ describe('LotteryGame', () => {
 
       await expect(vrfCoordinatorContract.callBackWithRandomness(
         requestId,
-        RANDOM_NUMBER,
+        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       )).to.emit(
         lotteryContract,
@@ -294,17 +286,13 @@ describe('LotteryGame', () => {
       expect(lottery.winner).to.equal(user1.address)
     });
 
-    it('', async () => {
-      const RANDOM_NUMBER = 5;
-
+    it('removes lotteries from the collection of open lotteries', async () => {
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.createLottery(TICKET_PRICE, DURATION * 2)
-
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -320,7 +308,7 @@ describe('LotteryGame', () => {
 
       await expect(vrfCoordinatorContract.callBackWithRandomness(
         requestId,
-        RANDOM_NUMBER,
+        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       ))
 
@@ -330,14 +318,11 @@ describe('LotteryGame', () => {
     });
 
     it('transfer the jackpot to the winner', async () => {
-      const RANDOM_NUMBER = 5;
-
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -349,7 +334,7 @@ describe('LotteryGame', () => {
 
       await expect(await vrfCoordinatorContract.callBackWithRandomness(
         requestId,
-        RANDOM_NUMBER,
+        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       )).to.changeEtherBalance(
         user1,
@@ -358,14 +343,11 @@ describe('LotteryGame', () => {
     });
 
     it('changes lottery state to WINNER_DECLARED when there is a winner', async () => {
-      const RANDOM_NUMBER = 5;
-
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -377,7 +359,7 @@ describe('LotteryGame', () => {
 
       await expect(await vrfCoordinatorContract.callBackWithRandomness(
         requestId,
-        RANDOM_NUMBER,
+        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       ))
 
@@ -396,9 +378,8 @@ describe('LotteryGame', () => {
 
     it('checkUpkeep should return false when there is an open lottery but the end time has not come yet', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -408,9 +389,8 @@ describe('LotteryGame', () => {
 
     it('checkUpkeep should return true and lottery id when there is an open lottery and the end time has come', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -424,9 +404,8 @@ describe('LotteryGame', () => {
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -440,9 +419,8 @@ describe('LotteryGame', () => {
       await fundWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      const options = { value: TICKET_PRICE }
-      await lotteryContract.participate(1, options);
-      await lotteryContract.connect(user1).participate(1, options);
+      await lotteryContract.participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
