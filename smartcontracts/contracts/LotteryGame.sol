@@ -180,4 +180,12 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   function getLottery(uint256 _lotteryId) external view returns(Lottery memory){
     return lotteryById[_lotteryId];
   }
+
+  function getLinkBalance() public view returns(uint256) {
+    return LINK.balanceOf(address(this));
+  }
+
+  function withdrawLink() external {
+    LINK.transfer(owner(), getLinkBalance());
+  }
 }

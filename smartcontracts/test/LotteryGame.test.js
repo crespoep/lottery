@@ -435,4 +435,32 @@ describe('LotteryGame', () => {
       await expect(upkeepNeeded[0]).to.be.false
     });
   })
+
+  it('returns the balance of LINK tokens in the contract', async () => {
+    await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+    await lotteryContract.participate(1, OPTIONS);
+    await lotteryContract.connect(user1).participate(1, OPTIONS);
+
+    expect(await lotteryContract.getLinkBalance()).to.equal(0)
+
+    await fundWithLink();
+
+    expect(await lotteryContract.getLinkBalance()).to.equal(ethers.utils.parseEther("1"))
+  });
+
+  it('withdrawing works correctly', async () => {
+    const initialUserBalance = await linkTokenContract.balanceOf(deployer.address)
+
+    await fundWithLink();
+
+    let newUserBalance = await linkTokenContract.balanceOf(deployer.address)
+
+    expect(initialUserBalance).not.to.be.equal(newUserBalance)
+
+    await lotteryContract.withdrawLink();
+
+    newUserBalance = await linkTokenContract.balanceOf(deployer.address)
+
+    expect(initialUserBalance).to.be.equal(newUserBalance)
+  });
 })
