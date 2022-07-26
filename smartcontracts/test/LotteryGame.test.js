@@ -12,8 +12,8 @@ const prepareForFundingWithLink =
   };
 
 describe('LotteryGame', () => {
-  const ONE_ETHER = ethers.constants.WeiPerEther;
-  const DURATION_IN_SECONDS = 60;
+  const TICKET_PRICE = ethers.constants.WeiPerEther;
+  const DURATION = 60;
 
   let
     deployer,
@@ -59,20 +59,20 @@ describe('LotteryGame', () => {
     it('should be reverted if ticket price is not greater than zero', async () => {
       const invalidTicketPrice = 0;
       await expect(
-        lotteryContract.createLottery(invalidTicketPrice, DURATION_IN_SECONDS)
+        lotteryContract.createLottery(invalidTicketPrice, DURATION)
       ).to.be.revertedWith("Ticket price must be greater than zero");
     });
 
     it('should be reverted if duration is less than 60 seconds', async () => {
       const invalidDuration = 50;
       await expect(
-        lotteryContract.createLottery(ONE_ETHER, invalidDuration)
+        lotteryContract.createLottery(TICKET_PRICE, invalidDuration)
       ).to.be.revertedWith("Lottery duration cannot be less than a minute");
     });
 
     it('should be reverted if anyone other than the admin tries to create a lottery', async () => {
       await expect(
-        lotteryContract.connect(user1).createLottery(ONE_ETHER, DURATION_IN_SECONDS)
+        lotteryContract.connect(user1).createLottery(TICKET_PRICE, DURATION)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -80,28 +80,28 @@ describe('LotteryGame', () => {
       let lotteryId = await lotteryContract.lotteryId();
       expect(lotteryId).to.equal(0);
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
 
       lotteryId = await lotteryContract.lotteryId();
       expect(lotteryId).to.equal(1);
     });
 
     it('should set the current id correctly', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       const lottery = await lotteryContract.getLottery(1);
 
       expect(lottery.id).to.equal("1");
     });
 
     it('should have the correct required ticket price', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       const lottery = await lotteryContract.getLottery(1);
 
-      expect(lottery.ticket).to.equal(ONE_ETHER);
+      expect(lottery.ticket).to.equal(TICKET_PRICE);
     });
 
     it('should have the correct required duration', async () => {
-      const transaction = await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      const transaction = await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       const transactionReceipt = await transaction.wait();
       const blockNumber = transactionReceipt.blockNumber;
 
@@ -109,18 +109,18 @@ describe('LotteryGame', () => {
 
       const timestamp = (await ethers.provider.getBlock(blockNumber)).timestamp;
 
-      expect(lottery.endTime).to.equal(timestamp + DURATION_IN_SECONDS);
+      expect(lottery.endTime).to.equal(timestamp + DURATION);
     });
 
     it("should not have any participants at first", async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       const lottery = await lotteryContract.getLottery(1);
       expect(lottery.participants).to.be.an("array");
       expect(lottery.participants).to.have.lengthOf(0);
     });
 
     it('should have open state', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       const lottery = await lotteryContract.getLottery(1);
       expect(lottery.state).to.equal(0);
     });
@@ -132,7 +132,7 @@ describe('LotteryGame', () => {
     expect(openLotteriesIds).to.be.an("array");
     expect(openLotteriesIds).to.have.lengthOf(0);
 
-    await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+    await lotteryContract.createLottery(TICKET_PRICE, DURATION);
     openLotteriesIds = await lotteryContract.getOpenLotteriesIds()
 
     expect(openLotteriesIds).to.be.an("array");
@@ -142,7 +142,7 @@ describe('LotteryGame', () => {
 
   describe('participation', () => {
     it('should be reverted when trying to participate without exact payment', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await expect(lotteryContract.participate(1))
         .to.be.revertedWith("The ticket payment should be exact");
       await expect(
@@ -163,8 +163,8 @@ describe('LotteryGame', () => {
     });
 
     it('should be reverted when users try to participate twice', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER };
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE };
       await lotteryContract.participate(1, options);
       await expect(lotteryContract.participate(1, options)).to.be.revertedWith("User already participated")
     });
@@ -172,11 +172,11 @@ describe('LotteryGame', () => {
     it('should be reverted when users try to participate if lottery is not open anymore', async () => {
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER };
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE };
       await lotteryContract.participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       await lotteryContract.declareWinner(1)
 
@@ -186,46 +186,63 @@ describe('LotteryGame', () => {
     });
 
     it("should add a new user to the lottery correctly", async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER };
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE };
       await lotteryContract.participate(1, options);
       const lottery = await lotteryContract.getLottery(1);
       expect(lottery.participants[0]).to.equal(deployer.address);
     });
 
     it("should increment the jackpot correctly", async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER };
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE };
 
       let lottery = await lotteryContract.getLottery(1);
       expect(lottery.jackpot).to.equal(0);
 
       await lotteryContract.participate(1, options);
       lottery = await lotteryContract.getLottery(1);
-      expect(lottery.jackpot).to.equal(ONE_ETHER);
+      expect(lottery.jackpot).to.equal(TICKET_PRICE);
     });
   })
 
-  describe("declare winner", async () => {
+  describe("declaring winner", async () => {
     it("should be reverted if the finalization time has not come yet", async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
+      await fundWithLink();
+
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await expect(lotteryContract.declareWinner(1))
         .to.be.revertedWith("The lottery has not finished yet")
     });
 
     it("should be reverted if game that does not exist", async () => {
+      await fundWithLink();
+
       await expect(lotteryContract.declareWinner(1))
         .to.be.revertedWith("The lottery does not exist");
+    });
+
+    it('should be reverted if contract does not have enough LINK', async () => {
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+
+      const options = { value: TICKET_PRICE }
+      await lotteryContract.participate(1, options);
+      await lotteryContract.connect(user1).participate(1, options);
+
+      await helpers.time.increase(DURATION)
+
+      await expect(lotteryContract.declareWinner(1))
+        .to.be.revertedWith("Not enough LINK")
     });
 
     it('requests a random number to the VRF coordinator', async () => {
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       await expect(lotteryContract.declareWinner(1))
         .to.emit(lotteryContract, "WinnerRequested")
@@ -234,11 +251,11 @@ describe('LotteryGame', () => {
     it('changes lottery state to closed', async () => {
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       await lotteryContract.declareWinner(1);
 
@@ -251,12 +268,12 @@ describe('LotteryGame', () => {
 
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
@@ -282,12 +299,12 @@ describe('LotteryGame', () => {
 
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
@@ -301,7 +318,7 @@ describe('LotteryGame', () => {
         lotteryContract.address
       )).to.changeEtherBalance(
         user1,
-        ONE_ETHER.mul(2)
+        TICKET_PRICE.mul(2)
       );
     });
 
@@ -310,12 +327,12 @@ describe('LotteryGame', () => {
 
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
@@ -343,8 +360,8 @@ describe('LotteryGame', () => {
     });
 
     it('checkUpkeep should return false when there is an open lottery but the end time has not come yet', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
@@ -355,12 +372,12 @@ describe('LotteryGame', () => {
     });
 
     it('checkUpkeep should return true and lottery id when there is an open lottery and the end time has come', async () => {
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -371,12 +388,12 @@ describe('LotteryGame', () => {
     it('performUpkeep should call declare winner if conditions are met', async () => {
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -387,12 +404,12 @@ describe('LotteryGame', () => {
     it('checkUpkeep should return false for a lottery if its end time has come but its state is closed', async () => {
       await fundWithLink();
 
-      await lotteryContract.createLottery(ONE_ETHER, DURATION_IN_SECONDS);
-      const options = { value: ONE_ETHER }
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const options = { value: TICKET_PRICE }
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await helpers.time.increase(DURATION_IN_SECONDS)
+      await helpers.time.increase(DURATION)
 
       let upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 

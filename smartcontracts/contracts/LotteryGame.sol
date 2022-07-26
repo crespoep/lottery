@@ -99,6 +99,8 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   }
 
   function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
+    require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK");
+
     Lottery storage _lottery = lotteryById[_lotteryId];
     require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
 
