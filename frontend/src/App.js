@@ -1,5 +1,7 @@
 import { useState } from "react";
 import './App.css';
+import HamburgerButton from "./components/HamburgerButton";
+import Navbar from "./components/Navbar";
 
 function App() {
   const [ account, setAccount ] = useState(null)
@@ -18,19 +20,8 @@ function App() {
   return (
     <div className="App">
       <header>
-        <div id="hamburger">
-          <svg className="fill-white" viewBox="0 0 120 80" width="30" height="30">
-            <rect width="100" height="10"></rect>
-            <rect y="30" width="100" height="10"></rect>
-            <rect y="60" width="100" height="10"></rect>
-          </svg>
-        </div>
-        <nav>
-          <ul>
-            <li>Home</li>
-            <li>About</li>
-          </ul>
-        </nav>
+        <HamburgerButton />
+        <Navbar />
         {
           account
             ? <div>{ account }</div>
