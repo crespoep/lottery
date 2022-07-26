@@ -37,14 +37,22 @@ const Header = ({
   }
 
   return (
-    <header>
+    <header className="flex flex-row justify-between h-14 items-center">
       <HamburgerButton />
-      <Navbar />
-      {
-        account
-          ? <div>{ account } - { balance }</div>
-          : <button id="connectWallet" onClick={connectWallet}>Connect wallet</button>
-      }
+      <div className="flex flex-row items-center">
+        <Navbar />
+        {
+          account
+            ? <div>{ account } - { balance }</div>
+            : <button
+                id="connectWallet"
+                className="bg-fluor-green text-black font-bold rounded-2xl p-2"
+                onClick={connectWallet}
+              >
+                Connect wallet
+              </button>
+        }
+      </div>
     </header>
   )
 }

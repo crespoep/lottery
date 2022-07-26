@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: digitalFont;
+    src: url("../DS-DIGIT.TTF");
+}
+
+body {
+    height: 100vh;
+    background: radial-gradient(1500px at left -3%, rgba(33, 154 , 113, 50),black,black);
+}
+
+.container {
+    width: 90%;
+    margin: 0 auto;
+}
+
+.button-shadow {
+    box-shadow: 5px 5px 0 0 #05cf62;
+}
+
+.digital-font {
+    font-family: digitalFont, Helvetica, sans-serif;
+}
+
+@media (min-width: 768px) {
+    .container {
+        width: 70%;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 1280px) {
+    .container {
+        width: 60%;
+        margin: 0 auto;
+    }
+}
