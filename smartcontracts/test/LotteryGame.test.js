@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
-const {BigNumber} = require("ethers");
+const helpers = require("@nomicfoundation/hardhat-network-helpers");
+const { BigNumber } = require("ethers");
 
 const prepareForFundingWithLink =
   (contractAddress, linkTokenAddress) => async () => {
@@ -9,11 +10,6 @@ const prepareForFundingWithLink =
       linkaddress: linkTokenAddress,
     });
   };
-
-const increaseTime = async (seconds) => {
-  await ethers.provider.send("evm_increaseTime", [seconds]);
-  await ethers.provider.send("evm_mine");
-}
 
 describe('LotteryGame', () => {
   const ONE_ETHER = ethers.constants.WeiPerEther;
@@ -180,7 +176,7 @@ describe('LotteryGame', () => {
       const options = { value: ONE_ETHER };
       await lotteryContract.participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       await lotteryContract.declareWinner(1)
 
@@ -229,7 +225,7 @@ describe('LotteryGame', () => {
       const options = { value: ONE_ETHER }
       await lotteryContract.participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       await expect(lotteryContract.declareWinner(1))
         .to.emit(lotteryContract, "WinnerRequested")
@@ -242,7 +238,7 @@ describe('LotteryGame', () => {
       const options = { value: ONE_ETHER }
       await lotteryContract.participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       await lotteryContract.declareWinner(1);
 
@@ -260,7 +256,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
@@ -291,7 +287,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
@@ -319,7 +315,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
@@ -364,7 +360,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -380,7 +376,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -396,7 +392,7 @@ describe('LotteryGame', () => {
       await lotteryContract.participate(1, options);
       await lotteryContract.connect(user1).participate(1, options);
 
-      await increaseTime(DURATION_IN_SECONDS);
+      await helpers.time.increase(DURATION_IN_SECONDS)
 
       let upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
