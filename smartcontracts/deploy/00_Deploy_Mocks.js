@@ -1,18 +1,27 @@
+const { network } = require("hardhat");
+
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy } = deployments;
+  const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
+  const { chainId } = network.config;
 
-  const linkTokenMock = await deploy("LinkToken", {
-    from: deployer,
-    log: true,
-  });
+  if (chainId === 31337) {
+    log("Using Hardhat network, deploying mocks...");
 
-  await deploy("VRFCoordinatorMock", {
-    from: deployer,
-    log: true,
-    args: [linkTokenMock.address],
-  });
+    const linkTokenMock = await deploy("LinkToken", {
+      from: deployer,
+      log: true,
+    });
 
+    await deploy("VRFCoordinatorMock", {
+      from: deployer,
+      log: true,
+      args: [linkTokenMock.address],
+    });
+
+    log("Mocks were deployed");
+    log("----------------------------------------------------");
+  }
 };
 
 module.exports.tags = ["all", "test"];
