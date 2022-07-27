@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import { ethers } from "ethers";
-import logo from "../eth-logo.png";
+import logo from "../assets/img/eth-logo.png";
 import contractAddress from "../contracts/contract-address.json";
 import LotteryArtifact from "../contracts/LotteryGame.json";
 import Message from "./Message";

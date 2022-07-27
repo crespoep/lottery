@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {ethers} from "ethers";
-import logo from "../eth-logo.png";
+import logo from "../assets/img/eth-logo.png";
 import { useOutletContext } from "react-router-dom"
 import contractAddress from "../contracts/contract-address.json";
 import LotteryArtifact from "../contracts/LotteryGame.json";
@@ -107,13 +107,12 @@ const Participation = ({
             </li>
           </ul>
         </div>
-
         {
           isThereAWinner()
             ? <div>
-              <h3 className="text-3xl text-center">Winner</h3>
-              <span className="truncate block">{ winner }</span>
-            </div>
+                <h3 className="text-3xl text-center">Winner</h3>
+                <span className="truncate block">{ winner }</span>
+              </div>
             : <div className="text-2xl text-center">There's no winner yet</div>
         }
       </div>
