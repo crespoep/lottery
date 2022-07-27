@@ -1,6 +1,7 @@
 import {BigNumber, ethers} from "ethers";
 import HamburgerButton from "./HamburgerButton";
 import Navbar from "./Navbar";
+import AccountBalanceLabel from "./AccountBalanceLabel";
 
 const Header = ({
   account,
@@ -43,7 +44,7 @@ const Header = ({
         <Navbar />
         {
           account
-            ? <div>{ account } - { balance }</div>
+            ? <AccountBalanceLabel account={account} balance={balance} />
             : <button
                 id="connectWallet"
                 className="bg-fluor-green text-black font-bold rounded-2xl p-2"
