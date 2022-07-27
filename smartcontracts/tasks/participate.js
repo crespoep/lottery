@@ -1,4 +1,3 @@
-
 task("participate", "Participate in a lottery")
   .addParam("lotteryid", "Lottery id")
   .addParam("user", "User address")

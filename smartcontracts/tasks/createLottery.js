@@ -1,5 +1,3 @@
-const { BigNumber } = require("ethers");
-
 task("create-lottery", "Create new lottery")
   .addParam("ticket", "Ticket price to participate in the lottery")
   .addParam("duration", "Lottery duration")
@@ -14,13 +12,13 @@ task("create-lottery", "Create new lottery")
     const ticket = taskArgs.ticket;
 
     const transaction = await lotteryContract.createLottery(
-      BigNumber.from(ticket),
+      ethers.BigNumber.from(ticket),
       parseInt(duration)
     );
 
     const receipt = await transaction.wait()
-    console.log(receipt)
 
+    console.log(receipt)
     console.log("Transaction Mined. Lottery created successfully");
   });
 
