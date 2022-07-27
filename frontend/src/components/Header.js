@@ -41,7 +41,7 @@ const Header = ({
     <header className="flex flex-row justify-between h-14 items-center">
       <HamburgerButton />
       <div className="flex flex-row items-center">
-        <Navbar />
+        <Navbar account={account} />
         {
           account
             ? <AccountBalanceLabel account={account} balance={balance} />

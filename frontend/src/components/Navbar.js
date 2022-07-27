@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-const Navbar = () => (
+const Navbar = ({ account }) => (
   <nav className="hidden md:block text-white">
     <ul className="flex">
       <li>
@@ -19,14 +19,17 @@ const Navbar = () => (
           About
         </NavLink>
       </li>
-      <li>
-        <NavLink
-          to="/my-participations"
-          className={({isActive}) => ("mr-4" + (isActive ? " text-light-green" : ""))}
-        >
-          My participations
-        </NavLink>
-      </li>
+      {
+        account &&
+          <li>
+            <NavLink
+              to="/my-participations"
+              className={({isActive}) => ("mr-4" + (isActive ? " text-light-green" : ""))}
+            >
+              My participations
+            </NavLink>
+          </li>
+      }
     </ul>
   </nav>
 )
