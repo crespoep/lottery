@@ -34,6 +34,8 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
 
   mapping(bytes32 => uint256) private lotteryIdByRequestId;
 
+  mapping(address => uint256[]) private participationsByUser;
+
   event WinnerRequested(
     uint256 indexed lotteryId,
     bytes32 indexed requestId
@@ -106,6 +108,8 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
 
     _lottery.participants.push(msg.sender);
     _lottery.jackpot += msg.value;
+
+    participationsByUser[msg.sender].push(_lotteryId);
   }
 
   function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
@@ -175,6 +179,10 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
 
   function getOpenLotteriesIds() public view returns(uint256[] memory) {
     return openLotteries;
+  }
+
+  function getParticipationsByUser(address _user) external view returns(uint256[] memory) {
+    return participationsByUser[_user];
   }
 
   function getLottery(uint256 _lotteryId) external view returns(Lottery memory){

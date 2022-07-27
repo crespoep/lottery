@@ -193,6 +193,19 @@ describe('LotteryGame', () => {
       expect(lottery.participants[0]).to.equal(deployer.address);
     });
 
+    it("should add the lottery id to the user's participations list", async () => {
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user1).participate(2, OPTIONS);
+
+      const participations = await lotteryContract.getParticipationsByUser(user1.address);
+      expect(
+        participations.map(val => val.toNumber())
+      ).deep.to.equal([1, 2])
+    });
+
     it("should increment the jackpot correctly", async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
 
