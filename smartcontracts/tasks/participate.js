@@ -15,14 +15,17 @@ task("participate", "Participate in a lottery")
 
     const lotteryId = taskArgs.lotteryid;
     const ticket = taskArgs.ticket;
-    
-    await lottery.connect(signer).participate(
+
+    const tx = await lottery.connect(signer).participate(
       parseInt(lotteryId),
       {
           value: ticket,
       }
     );
 
+    const receipt = await tx.wait()
+
+    console.log(receipt)
     console.log(`Transaction Mined. User ${taskArgs.user} has participated`);
   });
 
