@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import logo from "../eth-logo.png";
 import contractAddress from "../contracts/contract-address.json";
 import LotteryArtifact from "../contracts/LotteryGame.json";
+import Message from "./Message";
 import {useOutletContext} from "react-router-dom";
 
 const LotteryList = () => {
@@ -52,7 +53,6 @@ const LotteryList = () => {
 
   const hasParticipated = participants => {
     if (account) {
-      console.log(account, participants)
       return participants.includes(ethers.utils.getAddress(account))
     }
   }
@@ -60,6 +60,7 @@ const LotteryList = () => {
   return (
     <div className="my-6">
       <h2 className="text-white text-center text-3xl">Available lotteries</h2>
+      <Message message="There is no available lotteries at the moment, come back later!" color="red-600" />
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 my-6 text-white">
         {
           lotteries.map(

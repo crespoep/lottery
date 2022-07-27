@@ -19,6 +19,14 @@ const Navbar = () => (
           About
         </NavLink>
       </li>
+      <li>
+        <NavLink
+          to="/my-participations"
+          className={({isActive}) => ("mr-4" + (isActive ? " text-light-green" : ""))}
+        >
+          My participations
+        </NavLink>
+      </li>
     </ul>
   </nav>
 )
