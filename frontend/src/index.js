@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LotteryList from "./components/LotteryList";
 import About from "./components/About";
+import Participations from "./components/Participations";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -13,8 +14,9 @@ root.render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />}>
-          <Route path="/" element={<LotteryList />}/>
+          <Route path="/" element={<LotteryList />} />
           <Route path="/about" element={<About />} />
+          <Route path="/my-participations" element={<Participations />} />
         </Route>
       </Routes>
     </BrowserRouter>
