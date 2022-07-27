@@ -4,9 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LotteryList from "./components/LotteryList";
-import About from "./components/About";
-import Participations from "./components/Participations";
+import LotteryList from "./components/pages/LotteryList/LotteryList";
+import About from "./components/pages/About/About";
+import Participations from "./components/pages/Participations/Participations";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

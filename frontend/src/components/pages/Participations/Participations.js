@@ -1,11 +1,11 @@
 import {useEffect, useState} from "react";
 import {ethers} from "ethers";
-import logo from "../assets/img/eth-logo.png";
+import logo from "../../../assets/img/eth-logo.png";
 import { useOutletContext } from "react-router-dom"
-import contractAddress from "../contracts/contract-address.json";
-import LotteryArtifact from "../contracts/LotteryGame.json";
+import contractAddress from "../../../contracts/contract-address.json";
+import LotteryArtifact from "../../../contracts/LotteryGame.json";
 import ParticipationFilterButton from "./ParticipationFilterButton";
-import Message from "./Message";
+import Message from "./../../Message";
 
 const Participations = () => {
   const [ account ] = useOutletContext()
