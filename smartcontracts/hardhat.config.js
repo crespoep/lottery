@@ -1,3 +1,4 @@
+require("dotenv").config();
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("@appliedblockchain/chainlink-plugins-fund-link");
@@ -22,7 +23,7 @@ module.exports = {
       chainId: 31337,
     },
     kovan: {
-      url: "",
+      url: process.env.KOVAN_URL,
       chainId: 42,
       accounts: [
         process.env.PRIVATE_KEY_DEPLOYER,

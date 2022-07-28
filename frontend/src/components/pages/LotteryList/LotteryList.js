@@ -67,14 +67,12 @@ const LotteryList = () => {
     <div className="my-6">
       <h2 className="text-white text-center text-3xl">Available lotteries</h2>
       {
-        loading &&
-          <div className="flex justify-center mt-20">
-            <ReactLoading type="spinningBubbles" height={100} width={100}/>
-          </div>
-      }
-      {
-        lotteries.length > 0
-          ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 my-6 text-white">
+        loading
+          ? <div className="flex justify-center mt-20">
+              <ReactLoading type="spinningBubbles" height={100} width={100}/>
+            </div>
+          : lotteries.length > 0
+            ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 my-6 text-white">
               {
                 lotteries.map(
                   lottery =>
@@ -87,8 +85,8 @@ const LotteryList = () => {
                     </div>
                 )
               }
-            </div>
-          : <Message message="There is no available lotteries at the moment, come back later!" color="red-600" />
+              </div>
+            : <Message message="There is no available lotteries at the moment, come back later!" color="red-600" />
       }
     </div>
   )

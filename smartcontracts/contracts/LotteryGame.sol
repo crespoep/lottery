@@ -114,17 +114,6 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     openLotteries.push(_currentId);
   }
 
-  function _checkUserHasNotAlreadyParticipated(uint256 _lotteryId) private view {
-    Lottery memory _lottery = lotteryById[_lotteryId];
-    address[] memory participants = _lottery.participants;
-    address user = msg.sender;
-    for (uint256 i = 0; i < participants.length; i++) {
-      if (user == participants[i]) {
-        revert UserHasAlreadyParticipated();
-      }
-    }
-  }
-
   function participate(uint256 _lotteryId)
     external payable
     notOwner
@@ -195,7 +184,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
       uint256 _lotteryId = openLotteries[i];
       Lottery memory _lottery = lotteryById[_lotteryId];
 
-      if (_lottery.endTime < block.timestamp && _lottery.state == State.OPEN) {
+      if (_keeperConditionsPassed(_lottery)) {
         upkeepNeeded = true;
         data = abi.encode(_lotteryId);
       }
@@ -207,7 +196,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
   function performUpkeep(bytes calldata performData) external override {
     uint256 _lotteryId = abi.decode(performData, (uint256));
     Lottery memory _lottery = lotteryById[_lotteryId];
-    if (_lottery.endTime < block.timestamp) {
+    if (_keeperConditionsPassed(_lottery)) {
       declareWinner(_lotteryId);
     }
   }
@@ -260,5 +249,24 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     if (_endTime > block.timestamp) {
       revert LotteryHasNotFinishedYet();
     }
+  }
+
+  function _checkUserHasNotAlreadyParticipated(uint256 _lotteryId) private view {
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    address[] memory participants = _lottery.participants;
+    address user = msg.sender;
+    for (uint256 i = 0; i < participants.length; i++) {
+      if (user == participants[i]) {
+        revert UserHasAlreadyParticipated();
+      }
+    }
+  }
+
+  function _keeperConditionsPassed(Lottery memory _lottery) private view returns (bool) {
+    return (
+      _lottery.endTime < block.timestamp &&
+      _lottery.state == State.OPEN &&
+      _lottery.participants.length > 1
+    );
   }
 }
