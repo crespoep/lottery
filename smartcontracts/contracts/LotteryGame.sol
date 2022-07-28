@@ -103,6 +103,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   {
     Lottery storage _lottery = lotteryById[_lotteryId];
 
+    require(msg.sender != owner(), "Owner cannot participate in a lottery");
     require(_lottery.state == State.OPEN, "Lottery is closed to new participants");
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
 
