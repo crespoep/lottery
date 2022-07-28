@@ -6,13 +6,17 @@ import LotteryArtifact from "../../../contracts/LotteryGame.json";
 import { lotteryStates } from "../../../contractEnumStates";
 import Message from "./../../Message";
 import {useOutletContext} from "react-router-dom";
+import ReactLoading from "react-loading";
 
 const LotteryList = () => {
   const [ account ] = useOutletContext()
   const [ lotteryContract, setLotteryContract ] = useState(null)
   const [ lotteries, setLotteries ] = useState([])
+  const [ loading, setLoading ] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+
     const { ethereum } = window;
     const provider = new ethers.providers.Web3Provider(ethereum);
 
@@ -35,6 +39,7 @@ const LotteryList = () => {
         ))
 
         setLotteries(lotteries)
+        setLoading(false)
       }
     }
     getNumber()
@@ -61,6 +66,12 @@ const LotteryList = () => {
   return (
     <div className="my-6">
       <h2 className="text-white text-center text-3xl">Available lotteries</h2>
+      {
+        loading &&
+          <div className="flex justify-center mt-20">
+            <ReactLoading type="spinningBubbles" height={100} width={100}/>
+          </div>
+      }
       {
         lotteries.length > 0
           ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 my-6 text-white">
