@@ -408,6 +408,18 @@ describe('LotteryGame', () => {
       expect(upkeepNeeded[1]).to.equal("0x");
     });
 
+    it('checkUpkeep should return false if there are not at least two participants in the lottery', async () => {
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
+
+      await helpers.time.increase(DURATION);
+
+      const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
+
+      expect(upkeepNeeded[0]).to.be.false
+      expect(upkeepNeeded[1]).to.equal("0x");
+    });
+
     it('checkUpkeep should return true and lottery id when there is an open lottery and the end time has come', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
