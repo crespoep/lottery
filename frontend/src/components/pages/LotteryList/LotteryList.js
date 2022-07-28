@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import logo from "../../../assets/img/eth-logo.png";
 import contractAddress from "../../../contracts/contract-address.json";
 import LotteryArtifact from "../../../contracts/LotteryGame.json";
+import { lotteryStates } from "../../../contractEnumStates";
 import Message from "./../../Message";
 import {useOutletContext} from "react-router-dom";
 
@@ -103,7 +104,7 @@ const Lottery = ({
 
   return (
     <div
-      className="h-80 my-4 border-2 border-light-green shadow-lg shadow-light-green rounded-2xl bg-back-black my-6 p-4 flex flex-col justify-between"
+      className="h-85 my-4 border-2 border-light-green shadow-lg shadow-light-green rounded-2xl bg-back-black my-6 p-4 flex flex-col justify-between"
     >
       <div>
         <div className="flex flex-col text-center text-3xl text-light-green">
@@ -113,6 +114,7 @@ const Lottery = ({
             <span className="text-white text-6xl pl-4 digital-font">{ formatToEther(jackpot) }</span>
           </div>
         </div>
+        <div className="text-center text-custom-gray font-bold text-2xl italic">{ lotteryStates[state] }</div>
         <ul>
           <li className="uppercase text-custom-gray">ends at: <span className="text-white">{ getDate(endTime) }</span></li>
           <li className="uppercase text-custom-gray">participants: <span className="text-white">{ participants.length }</span></li>
