@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
-contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
+contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
   using Counters for Counters.Counter;
 
   Counters.Counter public lotteryId;
+
+  address public owner;
 
   uint256 internal fee;
 
@@ -72,9 +73,11 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   ) VRFConsumerBase (_vrfCoordinatorAddress, _linkAddress) {
     keyHash = _keyHash;
     fee = _fee;
+    owner = msg.sender;
   }
 
-  function createLottery(uint256 _ticket, uint256 _duration) public onlyOwner {
+  function createLottery(uint256 _ticket, uint256 _duration) public {
+    require(msg.sender == owner, "Ownable: caller is not the owner");
     require(_ticket > 0, "Ticket price must be greater than zero");
     require(_duration >= 60, "Lottery duration cannot be less than a minute");
 
@@ -103,7 +106,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   {
     Lottery storage _lottery = lotteryById[_lotteryId];
 
-    require(msg.sender != owner(), "Owner cannot participate in a lottery");
+    require(msg.sender != owner, "Owner cannot participate in a lottery");
     require(_lottery.state == State.OPEN, "Lottery is closed to new participants");
     require(msg.value == _lottery.ticket, "The ticket payment should be exact");
 
@@ -195,6 +198,6 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface, Ownable {
   }
 
   function withdrawLink() external {
-    LINK.transfer(owner(), getLinkBalance());
+    LINK.transfer(owner, getLinkBalance());
   }
 }
