@@ -6,6 +6,18 @@ import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
+error TicketPriceNotGreaterThanZero();
+error LotteryDurationNotEnough();
+error LotteryClosedToNewParticipants();
+error TicketPaymentIsNotExact();
+error LotteryHasNotFinishedYet();
+error LotteryDoesNotExist();
+error CallerIsNotTheOwner();
+error OwnerCannotParticipateInLotteries();
+error UserHasAlreadyParticipated();
+error NotEnoughLINK();
+error TransferToWinnerFailed();
+
 contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
   using Counters for Counters.Counter;
 
@@ -47,20 +59,24 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     address indexed winner
   );
 
-  modifier lotteryExist(uint256 _lotteryId) {
-    Lottery memory _lottery = lotteryById[_lotteryId];
-    require(_lottery.id > 0, "The lottery does not exist");
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      revert CallerIsNotTheOwner();
+    }
     _;
   }
 
-  modifier notParticipated(uint256 _lotteryId) {
+  modifier notOwner() {
+    if (msg.sender == owner) {
+      revert OwnerCannotParticipateInLotteries();
+    }
+    _;
+  }
+
+  modifier lotteryExist(uint256 _lotteryId) {
     Lottery memory _lottery = lotteryById[_lotteryId];
-    address[] memory participants = _lottery.participants;
-    address user = msg.sender;
-    for (uint256 i = 0; i < participants.length; i++) {
-      if (user == participants[i]) {
-        revert("User already participated");
-      }
+    if (_lottery.id == 0) {
+      revert LotteryDoesNotExist();
     }
     _;
   }
@@ -76,10 +92,9 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     owner = msg.sender;
   }
 
-  function createLottery(uint256 _ticket, uint256 _duration) public {
-    require(msg.sender == owner, "Ownable: caller is not the owner");
-    require(_ticket > 0, "Ticket price must be greater than zero");
-    require(_duration >= 60, "Lottery duration cannot be less than a minute");
+  function createLottery(uint256 _ticket, uint256 _duration) public onlyOwner {
+    _checkTicketPrice(_ticket);
+    _checkDuration(_duration);
 
     uint256 _endTime = block.timestamp + _duration;
     lotteryId.increment();
@@ -99,16 +114,27 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     openLotteries.push(_currentId);
   }
 
+  function _checkUserHasNotAlreadyParticipated(uint256 _lotteryId) private view {
+    Lottery memory _lottery = lotteryById[_lotteryId];
+    address[] memory participants = _lottery.participants;
+    address user = msg.sender;
+    for (uint256 i = 0; i < participants.length; i++) {
+      if (user == participants[i]) {
+        revert UserHasAlreadyParticipated();
+      }
+    }
+  }
+
   function participate(uint256 _lotteryId)
     external payable
+    notOwner
     lotteryExist(_lotteryId)
-    notParticipated(_lotteryId)
   {
     Lottery storage _lottery = lotteryById[_lotteryId];
 
-    require(msg.sender != owner, "Owner cannot participate in a lottery");
-    require(_lottery.state == State.OPEN, "Lottery is closed to new participants");
-    require(msg.value == _lottery.ticket, "The ticket payment should be exact");
+    _checkUserHasNotAlreadyParticipated(_lotteryId);
+    _checkIfLotteryIsClosed(_lottery.state);
+    _checkIfTicketPaymentIsExact(_lottery.ticket);
 
     _lottery.participants.push(msg.sender);
     _lottery.jackpot += msg.value;
@@ -117,10 +143,12 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
   }
 
   function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
-    require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK");
+    if (LINK.balanceOf(address(this)) < fee) {
+      revert NotEnoughLINK();
+    }
 
     Lottery storage _lottery = lotteryById[_lotteryId];
-    require(_lottery.endTime < block.timestamp, "The lottery has not finished yet");
+    _checkIfLotteryHasFinished(_lottery.endTime);
 
     bytes32 requestId = requestRandomness(keyHash, fee);
     lotteryIdByRequestId[requestId] = _lotteryId;
@@ -138,7 +166,10 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     _lottery.winner = _winner;
 
     (bool success, ) = _winner.call{ value: _lottery.jackpot }("");
-    require(success, "Transfer to winner failed");
+
+    if (!success) {
+      revert TransferToWinnerFailed();
+    }
 
     _lottery.state = State.WINNER_DECLARED;
 
@@ -199,5 +230,35 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
 
   function withdrawLink() external {
     LINK.transfer(owner, getLinkBalance());
+  }
+
+  function _checkTicketPrice(uint256 _ticketPrice) private pure {
+    if (_ticketPrice <= 0) {
+      revert TicketPriceNotGreaterThanZero();
+    }
+  }
+
+  function _checkDuration(uint256 _duration) private pure {
+    if (_duration < 60) {
+      revert LotteryDurationNotEnough();
+    }
+  }
+
+  function _checkIfLotteryIsClosed(State _state) private pure {
+    if (_state != State.OPEN) {
+      revert LotteryClosedToNewParticipants();
+    }
+  }
+
+  function _checkIfTicketPaymentIsExact(uint256 _ticket) private view {
+    if (msg.value != _ticket) {
+      revert TicketPaymentIsNotExact();
+    }
+  }
+
+  function _checkIfLotteryHasFinished(uint256 _endTime) private view {
+    if (_endTime > block.timestamp) {
+      revert LotteryHasNotFinishedYet();
+    }
   }
 }
