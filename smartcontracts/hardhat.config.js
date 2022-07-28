@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
-require("hardhat-deploy");
+require("@nomiclabs/hardhat-etherscan");
 require("@appliedblockchain/chainlink-plugins-fund-link");
+require("hardhat-deploy");
 require("./tasks/createLottery");
 require("./tasks/participate");
 
@@ -31,6 +32,9 @@ module.exports = {
         x => x !== undefined
       )
     }
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   namedAccounts: {
     deployer: {
