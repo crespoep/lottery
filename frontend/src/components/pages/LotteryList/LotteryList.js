@@ -104,7 +104,9 @@ const Lottery = ({
   participate,
   hasParticipated
 }) => {
-  const formatToEther = number => ethers.utils.formatEther(number)
+  const lotteryState = lotteryStates[state];
+
+  const formatToEther = number => ethers.utils.formatEther(number);
 
   const getDate = finalizationTime =>
     (new Date(finalizationTime.toNumber() * 1000)).toTimeString()
@@ -125,7 +127,7 @@ const Lottery = ({
             <span className="text-white text-6xl pl-4 digital-font">{ formatToEther(jackpot) }</span>
           </div>
         </div>
-        <div className="text-center text-custom-gray font-bold text-2xl italic">{ lotteryStates[state] }</div>
+        <div className="text-center text-custom-gray font-bold text-2xl italic">{ lotteryState }</div>
         <ul>
           <li className="uppercase text-custom-gray">ends at: <span className="text-white">{ getDate(endTime) }</span></li>
           <li className="uppercase text-custom-gray">participants: <span className="text-white">{ participants.length }</span></li>
@@ -134,18 +136,38 @@ const Lottery = ({
             <span className="text-white">{ formatToEther(ticket) } ETH</span></li>
         </ul>
       </div>
-      {
-        hasParticipated
-          ? <div className="text-2xl p-3 mx-auto">You already participated !</div>
-          : <button
-            type="button"
-            className="border-2 border-light-green text-2xl p-3 mx-auto w-40 button-shadow block"
-            onClick={participateWithId}
-          >
-            Participate
-          </button>
-      }
+      <ParticipateButton
+        hasParticipated={hasParticipated}
+        participateWithId={participateWithId}
+        lotteryState={lotteryState}
+      />
     </div>
+  )
+}
+
+const ParticipateButton = ({
+  hasParticipated,
+  participateWithId,
+  lotteryState
+}) => {
+  return (
+    <>
+      {
+        lotteryState === "OPEN"
+          ? hasParticipated
+            ? <div className="text-2xl p-3 mx-auto">You already participated !</div>
+            : <button
+              type="button"
+              className="border-2 border-light-green text-2xl p-3 mx-auto w-40 button-shadow block"
+              onClick={participateWithId}
+            >
+              Participate
+            </button>
+          : <div className="text-2xl p-3 mx-auto">
+              Lottery is closed to new participants. Winner is being determined.
+            </div>
+      }
+    </>
   )
 }
 
