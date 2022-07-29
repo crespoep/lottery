@@ -4,24 +4,30 @@
 Deploy the LotteryGame contract to Kovan:
 
 ```bash
-$ cd smartcontracts
-$ npm run deploy:testnet
+cd smartcontracts
+npm run deploy:testnet
 ```
 
 Fund it with enough LINK (e.g. 1 LINK):
 ```bash
-$ npx hardhat fund-link --contract <contract-address> --linkaddress 0xa36085F69e2889c224210F603D836748e7dC0088 --fundamount 1000000000000000000 --network kovan
+npx hardhat fund-link --contract <contract-address> --linkaddress 0xa36085F69e2889c224210F603D836748e7dC0088 --fundamount 1000000000000000000 --network kovan
 ```
+
+Copy .env.example file to .env and complete the real values of diferent environment variables
 
 ### Register new keeper
 Head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.
 
+### Create lotteries and participations
+Go to smartcontracts/README.md to find explanations for the different commands.
+
 ## Frontend
 ```bash
-$ cp smartcontracts/deployments/kovan/LotteryGame.json frontend/src/contracts/LotteryGame.json
+cp smartcontracts/deployments/kovan/LotteryGame.json frontend/src/contracts/LotteryGame.json
 ```
 
 Copy the contract-address.example.json and change the name to contract-address.json, then complete the deployed contract address
 ```bash
-$ cp frontend/src/contracts/contract-address.example.json frontend/src/contracts/contract-address.json
+cp frontend/src/contracts/contract-address.example.json frontend/src/contracts/contract-address.json
 ```
+
