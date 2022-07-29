@@ -31,14 +31,19 @@ const LotteryList = () => {
 
   useEffect(() => {
     const getNumber = async () => {
-      if (lotteryContract) {
-        const lotteriesIds = await lotteryContract.getOpenLotteriesIds()
+      try {
+        if (lotteryContract) {
+          const lotteriesIds = await lotteryContract.getOpenLotteriesIds()
 
-        const lotteries = await Promise.all(lotteriesIds.map(
-          async (id) => await lotteryContract.getLottery(id)
-        ))
+          const lotteries = await Promise.all(lotteriesIds.map(
+            async (id) => await lotteryContract.getLottery(id)
+          ))
 
-        setLotteries(lotteries)
+          setLotteries(lotteries)
+        }
+      } catch (e) {
+        console.log("Check your network: ", e)
+      } finally {
         setLoading(false)
       }
     }
