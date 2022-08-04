@@ -31,7 +31,6 @@ const LotteryListLoader = () => {
 
   useEffect(() => {
     const getNumber = async () => {
-      await (new Promise(resolve => setTimeout(() => resolve(), 2000)))
       try {
         if (lotteryContract) {
           const lotteriesIds = await lotteryContract.getOpenLotteriesIds()
