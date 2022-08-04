@@ -6,9 +6,9 @@ import LotteryArtifact from "../../../contracts/LotteryGame.json";
 import { lotteryStates } from "../../../contractEnumStates";
 import Message from "./../../Message";
 import {useOutletContext} from "react-router-dom";
-import ReactLoading from "react-loading";
+import withLoading from "../../withLoading";
 
-const LotteryList = () => {
+const LotteryListLoader = () => {
   const [ account ] = useOutletContext()
   const [ lotteryContract, setLotteryContract ] = useState(null)
   const [ lotteries, setLotteries ] = useState([])
@@ -31,6 +31,7 @@ const LotteryList = () => {
 
   useEffect(() => {
     const getNumber = async () => {
+      await (new Promise(resolve => setTimeout(() => resolve(), 2000)))
       try {
         if (lotteryContract) {
           const lotteriesIds = await lotteryContract.getOpenLotteriesIds()
@@ -40,11 +41,11 @@ const LotteryList = () => {
           ))
 
           setLotteries(lotteries)
+          setLoading(false)
         }
       } catch (e) {
-        console.log("Check your network: ", e)
-      } finally {
         setLoading(false)
+        console.log("Check your network: ", e)
       }
     }
     getNumber()
@@ -68,32 +69,45 @@ const LotteryList = () => {
     }
   }
 
+  const LotteryListWithLoading = withLoading(LotteryList);
+
   return (
     <div className="my-6">
       <h2 className="text-white text-center text-3xl">Available lotteries</h2>
       {
-        loading
-          ? <div className="flex justify-center mt-20">
-              <ReactLoading type="spinningBubbles" height={100} width={100}/>
-            </div>
-          : lotteries.length > 0
-            ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 my-6 text-white">
-              {
-                lotteries.map(
-                  lottery =>
-                    <div key={lottery.id.toNumber()}>
-                      <Lottery
-                        {...lottery}
-                        hasParticipated={hasParticipated(lottery.participants)}
-                        participate={participate}
-                      />
-                    </div>
-                )
-              }
-              </div>
-            : <Message message="There is no available lotteries at the moment, come back later!" color="red-600" />
+        <LotteryListWithLoading
+          isLoading={loading}
+          lotteries={lotteries}
+          hasParticipated={hasParticipated}
+          participate={participate}
+        />
       }
     </div>
+  )
+}
+
+const LotteryList = ({
+  lotteries,
+  hasParticipated,
+  participate
+}) => {
+  return (
+    lotteries.length > 0
+      ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 my-6 text-white">
+        {
+          lotteries.map(
+            lottery =>
+              <div key={lottery.id.toNumber()}>
+                <Lottery
+                  {...lottery}
+                  hasParticipated={hasParticipated(lottery.participants)}
+                  participate={participate}
+                />
+              </div>
+          )
+        }
+      </div>
+      : <Message message="There is no available lotteries at the moment, come back later!" color="red-600" />
   )
 }
 
@@ -174,6 +188,6 @@ const ParticipateButton = ({
   )
 }
 
-export default LotteryList
+export default LotteryListLoader
 
 

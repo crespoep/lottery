@@ -6,14 +6,18 @@ import contractAddress from "../../../contracts/contract-address.json";
 import LotteryArtifact from "../../../contracts/LotteryGame.json";
 import ParticipationFilterButton from "./ParticipationFilterButton";
 import Message from "./../../Message";
+import withLoading from "../../withLoading";
 
-const Participations = () => {
+const ParticipationListLoader = () => {
   const [ account ] = useOutletContext()
   const [ contract, setContract ] = useState(null)
   const [ won, setWon ] = useState(true)
   const [ participations, setParticipations ] = useState([])
+  const [ loading, setLoading ] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+
     const { ethereum } = window;
     const provider = new ethers.providers.Web3Provider(ethereum);
 
@@ -28,14 +32,21 @@ const Participations = () => {
 
   useEffect(() => {
     const fetchParticipations = async () => {
-      if (contract && account) {
-        const participationIds = await contract.getParticipationsByUser(ethers.utils.getAddress(account))
+      await (new Promise(resolve => setTimeout(() => resolve(), 2000)))
+      try {
+        if (contract && account) {
+          const participationIds = await contract.getParticipationsByUser(ethers.utils.getAddress(account))
 
-        const participations = await Promise.all(
-          participationIds.map(async (id) => await contract.getLottery(id))
-        )
+          const participations = await Promise.all(
+            participationIds.map(async (id) => await contract.getLottery(id))
+          )
 
-        setParticipations(participations)
+          setParticipations(participations)
+          setLoading(false);
+        }
+      } catch (e) {
+        setLoading(false)
+        console.log("Check your network: ", e)
       }
     }
     fetchParticipations()
@@ -51,9 +62,30 @@ const Participations = () => {
     }
   )
 
+  const ParticipationListWithLoading = withLoading(ParticipationList);
+
   return (
     <div className="my-6">
       <h2 className="text-white text-center text-3xl">My participations</h2>
+      <ParticipationListWithLoading
+        isLoading={loading}
+        participations={participations}
+        filteredParticipations={filteredParticipations}
+        won={won}
+        setWon={setWon}
+      />
+    </div>
+  )
+}
+
+const ParticipationList = ({
+  participations,
+  filteredParticipations,
+  won,
+  setWon
+}) => {
+  return (
+    <>
       {
         participations.length > 0
           ? <ParticipationFilterButton won={won} setWon={setWon} />
@@ -72,7 +104,7 @@ const Participations = () => {
           filteredParticipations.map(lottery => <Participation key={lottery.id.toNumber()} {...lottery} />)
         }
       </div>
-    </div>
+    </>
   )
 }
 
@@ -120,4 +152,4 @@ const Participation = ({
   )
 }
 
-export default Participations;
+export default ParticipationListLoader;
