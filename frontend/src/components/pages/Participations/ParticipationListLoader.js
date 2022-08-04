@@ -32,7 +32,6 @@ const ParticipationListLoader = () => {
 
   useEffect(() => {
     const fetchParticipations = async () => {
-      await (new Promise(resolve => setTimeout(() => resolve(), 2000)))
       try {
         if (contract && account) {
           const participationIds = await contract.getParticipationsByUser(ethers.utils.getAddress(account))
