@@ -4,9 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LotteryList from "./components/pages/LotteryList/LotteryList";
+import LotteryListLoader from "./components/pages/LotteryList/LotteryListLoader";
 import About from "./components/pages/About/About";
-import Participations from "./components/pages/Participations/Participations";
+import ParticipationListLoader from "./components/pages/Participations/ParticipationListLoader";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -14,9 +14,9 @@ root.render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />}>
-          <Route path="/" element={<LotteryList />} />
+          <Route path="/" element={<LotteryListLoader />} />
           <Route path="/about" element={<About />} />
-          <Route path="/my-participations" element={<Participations />} />
+          <Route path="/my-participations" element={<ParticipationListLoader />} />
         </Route>
       </Routes>
     </BrowserRouter>
