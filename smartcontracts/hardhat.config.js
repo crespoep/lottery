@@ -1,8 +1,11 @@
 require("dotenv").config();
+
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("@appliedblockchain/chainlink-plugins-fund-link");
 require("hardhat-deploy");
+require("hardhat-gas-reporter");
+require("solidity-coverage");
 require("./tasks/createLottery");
 require("./tasks/participate");
 
@@ -36,6 +39,9 @@ module.exports = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY
+  },
+  gasReporter: {
+    enabled: !!(process.env.REPORT_GAS)
   },
   namedAccounts: {
     deployer: {

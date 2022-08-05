@@ -7,3 +7,5 @@ smartcontracts/artifacts
 smartcontracts/cache
 smartcontracts/deployments
 smartcontracts/.env
+smartcontracts/coverage.json
+smartcontracts/coverage
