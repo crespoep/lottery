@@ -2,6 +2,7 @@ require("dotenv").config();
 
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
+// require("@nomiclabs/hardhat-solhint");
 require("@appliedblockchain/chainlink-plugins-fund-link");
 require("hardhat-deploy");
 require("hardhat-gas-reporter");
