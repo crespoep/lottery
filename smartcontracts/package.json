@@ -7,6 +7,7 @@
     "deploy": "hardhat deploy",
     "deploy:testnet": "npx hardhat deploy --network kovan",
     "test": "hardhat test",
+    "solhint": "solhint contracts/**/*.sol",
     "prettier": "prettier --write 'contracts/**/*.sol'"
   },
   "keywords": [],
@@ -32,6 +33,7 @@
     "hardhat-watcher": "^2.3.0",
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "^1.0.0-dev.23",
+    "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.21"
   }
 }
