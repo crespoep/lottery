@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
 const { BigNumber } = require("ethers");
+const {time} = require("@nomicfoundation/hardhat-network-helpers");
 
 const prepareForFundingWithLink =
   (contractAddress, linkTokenAddress) => async () => {
@@ -77,6 +78,18 @@ describe('LotteryGame', () => {
       await expect(
         lotteryContract.connect(user1).createLottery(TICKET_PRICE, DURATION)
       ).to.be.revertedWith("CallerIsNotTheOwner()");
+    });
+
+    it('should emit LotteryCreated event', async () => {
+      const tx = await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      const receipt = await tx.wait();
+      const blockNumber = receipt.blockNumber;
+      const timestamp = (await ethers.provider.getBlock(blockNumber)).timestamp;
+      const event = receipt.events.find(e => e.event === "LotteryCreated")
+      expect(event.event).to.equal("LotteryCreated")
+      expect(event.args.id).to.equal(1)
+      expect(event.args.ticketPrice).to.equal(TICKET_PRICE)
+      expect(event.args.endDate).to.equal(timestamp + DURATION)
     });
 
     it('increments the number of games', async () => {
@@ -199,6 +212,16 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       const lottery = await lotteryContract.getLottery(1);
       expect(lottery.participants[0]).to.equal(user1.address);
+    });
+
+    it.only('should emit ParticipationRegistered event', async () => {
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+
+      const lotteryId = 1;
+      await expect(lotteryContract.connect(user1).participate(lotteryId, OPTIONS))
+        .to.emit(lotteryContract, "ParticipationRegistered")
+        .withArgs(lotteryId, user1.address);
+
     });
 
     it("should add the lottery id to the user's participations list", async () => {
