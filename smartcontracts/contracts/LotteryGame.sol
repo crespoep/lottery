@@ -23,20 +23,6 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
 
     Counters.Counter public lotteryId;
 
-    address public owner;
-
-    uint256 internal fee;
-
-    bytes32 internal keyHash;
-
-    uint256[] public openLotteries;
-
-    enum State {
-        OPEN,
-        CLOSED,
-        WINNER_DECLARED
-    }
-
     struct Lottery {
         uint256 id;
         uint256 ticket;
@@ -47,14 +33,25 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         State state;
     }
 
+    enum State {
+        OPEN,
+        CLOSED,
+        WINNER_DECLARED
+    }
+
+    uint256 internal fee;
+
+    address public owner;
+    
     mapping(uint256 => Lottery) private lotteryById;
-
     mapping(bytes32 => uint256) private lotteryIdByRequestId;
-
     mapping(address => uint256[]) private participationsByUser;
 
-    event WinnerRequested(uint256 indexed lotteryId, bytes32 indexed requestId);
+    uint256[] public openLotteries;
 
+    bytes32 internal keyHash;
+
+    event WinnerRequested(uint256 indexed lotteryId, bytes32 indexed requestId);
     event WinnerDeclared(uint256 indexed lotteryId, address indexed winner);
 
     modifier onlyOwner() {
@@ -94,8 +91,8 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         public
         onlyOwner
     {
-        _checkTicketPrice(_ticket);
-        _checkDuration(_duration);
+        _checkIfTicketPriceIsValid(_ticket);
+        _checkIfDurationIsValid(_duration);
 
         uint256 _endTime = block.timestamp + _duration;
         lotteryId.increment();
@@ -124,7 +121,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         Lottery storage _lottery = lotteryById[_lotteryId];
 
         _checkUserHasNotAlreadyParticipated(_lotteryId);
-        _checkIfLotteryIsClosed(_lottery.state);
+        _checkIfLotteryIsOpen(_lottery.state);
         _checkIfTicketPaymentIsExact(_lottery.ticket);
 
         _lottery.participants.push(msg.sender);
@@ -239,19 +236,19 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         LINK.transfer(owner, getLinkBalance());
     }
 
-    function _checkTicketPrice(uint256 _ticketPrice) private pure {
+    function _checkIfTicketPriceIsValid(uint256 _ticketPrice) private pure {
         if (_ticketPrice <= 0) {
             revert TicketPriceNotGreaterThanZero();
         }
     }
 
-    function _checkDuration(uint256 _duration) private pure {
+    function _checkIfDurationIsValid(uint256 _duration) private pure {
         if (_duration < 60) {
             revert LotteryDurationNotEnough();
         }
     }
 
-    function _checkIfLotteryIsClosed(State _state) private pure {
+    function _checkIfLotteryIsOpen(State _state) private pure {
         if (_state != State.OPEN) {
             revert LotteryClosedToNewParticipants();
         }
