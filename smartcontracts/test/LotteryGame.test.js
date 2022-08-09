@@ -214,7 +214,7 @@ describe('LotteryGame', () => {
       expect(lottery.participants[0]).to.equal(user1.address);
     });
 
-    it.only('should emit ParticipationRegistered event', async () => {
+    it('should emit ParticipationRegistered event', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
 
       const lotteryId = 1;
