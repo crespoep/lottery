@@ -17,6 +17,8 @@ error OwnerCannotParticipateInLotteries();
 error UserHasAlreadyParticipated();
 error NotEnoughLINK();
 error TransferToWinnerFailed();
+error NotEnoughParticipants();
+error LotteryAlreadyClosed();
 
 contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
@@ -155,7 +157,10 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
         Lottery storage _lottery = lotteryById[_lotteryId];
+
         _checkIfLotteryHasFinished(_lottery.endTime);
+        _checkIfThereAreEnoughParticipants(_lottery.participants.length);
+        _checkIfLotteryIsOpen(_lottery.state);
 
         uint256 requestId = coordinator.requestRandomWords(
             keyHash,
@@ -268,7 +273,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     function _checkIfLotteryIsOpen(State _state) private pure {
         if (_state != State.OPEN) {
-            revert LotteryClosedToNewParticipants();
+            revert LotteryAlreadyClosed();
         }
     }
 
@@ -281,6 +286,12 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     function _checkIfLotteryHasFinished(uint256 _endTime) private view {
         if (_endTime > block.timestamp) {
             revert LotteryHasNotFinishedYet();
+        }
+    }
+
+    function _checkIfThereAreEnoughParticipants(uint256 _numberOfParticipants) private pure {
+        if (_numberOfParticipants < 2) {
+            revert NotEnoughParticipants();
         }
     }
 
