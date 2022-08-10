@@ -7,7 +7,6 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
 describe('LotteryGame', () => {
   const TICKET_PRICE = ethers.constants.WeiPerEther;
   const DURATION = 60;
-  const RANDOM_NUMBER_EXAMPLE = 5;
   const OPTIONS = { value: TICKET_PRICE };
 
   let
@@ -306,7 +305,6 @@ describe('LotteryGame', () => {
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        // RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       )).to.emit(
         lotteryContract,
@@ -339,7 +337,6 @@ describe('LotteryGame', () => {
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        // RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       ))
 
@@ -366,7 +363,6 @@ describe('LotteryGame', () => {
 
       await expect(await vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        // RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       )).to.changeEtherBalance(
         user2,
@@ -391,7 +387,6 @@ describe('LotteryGame', () => {
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        // RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       ))
 

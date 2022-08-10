@@ -21,6 +21,10 @@ error TransferToWinnerFailed();
 contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
 
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+    uint32 private constant CALLBACK_GAS_LIMIT = 100000;
+    uint32 private constant NUM_WORDS = 1;
+
     Counters.Counter public lotteryId;
 
     struct Lottery {
@@ -39,6 +43,9 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         WINNER_DECLARED
     }
 
+    VRFCoordinatorV2Interface private coordinator;
+
+    uint64 public subscriptionId;
     uint256 internal fee;
 
     address public owner;
@@ -48,6 +55,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     mapping(address => uint256[]) private participationsByUser;
 
     uint256[] public openLotteries;
+    uint256[] public randomWords;
 
     bytes32 internal keyHash;
 
@@ -56,13 +64,12 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         uint256 indexed ticketPrice,
         uint256 endDate
     );
-    event ParticipationRegistered(uint256 indexed lotteryId, address indexed user);
+    event ParticipationRegistered(
+        uint256 indexed lotteryId,
+        address indexed user
+    );
     event WinnerRequested(uint256 indexed lotteryId, uint256 indexed requestId);
     event WinnerDeclared(uint256 indexed lotteryId, address indexed winner);
-
-    address vrfCoordinator;
-    uint256[] public s_randomWords;
-    uint64 subscriptionId;
 
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -92,11 +99,11 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         uint256 _fee,
         uint64 _subscriptionId
     ) VRFConsumerBaseV2(_vrfCoordinatorAddress) {
-        vrfCoordinator = _vrfCoordinatorAddress;
+        coordinator = VRFCoordinatorV2Interface(_vrfCoordinatorAddress);
         keyHash = _keyHash;
         fee = _fee;
-        owner = msg.sender;
         subscriptionId = _subscriptionId;
+        owner = msg.sender;
     }
 
     function createLottery(uint256 _ticket, uint256 _duration)
@@ -150,16 +157,12 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         Lottery storage _lottery = lotteryById[_lotteryId];
         _checkIfLotteryHasFinished(_lottery.endTime);
 
-        VRFCoordinatorV2Interface coordinator = VRFCoordinatorV2Interface(vrfCoordinator);
-        uint16 requestConfirmations = 3;
-        uint32 callbackGasLimit = 100000;
-        uint32 numWords =  2;
         uint256 requestId = coordinator.requestRandomWords(
             keyHash,
             subscriptionId,
-            requestConfirmations,
-            callbackGasLimit,
-            numWords
+            REQUEST_CONFIRMATIONS,
+            CALLBACK_GAS_LIMIT,
+            NUM_WORDS
         );
 
         lotteryIdByRequestId[requestId] = _lotteryId;
