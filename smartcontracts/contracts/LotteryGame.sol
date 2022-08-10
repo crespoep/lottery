@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "hardhat/console.sol";
 
 error TicketPriceNotGreaterThanZero();
 error LotteryDurationNotEnough();
@@ -18,7 +18,7 @@ error UserHasAlreadyParticipated();
 error NotEnoughLINK();
 error TransferToWinnerFailed();
 
-contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
+contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
 
     Counters.Counter public lotteryId;
@@ -44,7 +44,7 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     address public owner;
 
     mapping(uint256 => Lottery) private lotteryById;
-    mapping(bytes32 => uint256) private lotteryIdByRequestId;
+    mapping(uint256 => uint256) private lotteryIdByRequestId;
     mapping(address => uint256[]) private participationsByUser;
 
     uint256[] public openLotteries;
@@ -57,8 +57,12 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         uint256 endDate
     );
     event ParticipationRegistered(uint256 indexed lotteryId, address indexed user);
-    event WinnerRequested(uint256 indexed lotteryId, bytes32 indexed requestId);
+    event WinnerRequested(uint256 indexed lotteryId, uint256 indexed requestId);
     event WinnerDeclared(uint256 indexed lotteryId, address indexed winner);
+
+    address vrfCoordinator;
+    uint256[] public s_randomWords;
+    uint64 subscriptionId;
 
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -84,13 +88,15 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
 
     constructor(
         address _vrfCoordinatorAddress,
-        address _linkAddress,
         bytes32 _keyHash,
-        uint256 _fee
-    ) VRFConsumerBase(_vrfCoordinatorAddress, _linkAddress) {
+        uint256 _fee,
+        uint64 _subscriptionId
+    ) VRFConsumerBaseV2(_vrfCoordinatorAddress) {
+        vrfCoordinator = _vrfCoordinatorAddress;
         keyHash = _keyHash;
         fee = _fee;
         owner = msg.sender;
+        subscriptionId = _subscriptionId;
     }
 
     function createLottery(uint256 _ticket, uint256 _duration)
@@ -141,14 +147,21 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
     }
 
     function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
-        if (LINK.balanceOf(address(this)) < fee) {
-            revert NotEnoughLINK();
-        }
-
         Lottery storage _lottery = lotteryById[_lotteryId];
         _checkIfLotteryHasFinished(_lottery.endTime);
 
-        bytes32 requestId = requestRandomness(keyHash, fee);
+        VRFCoordinatorV2Interface coordinator = VRFCoordinatorV2Interface(vrfCoordinator);
+        uint16 requestConfirmations = 3;
+        uint32 callbackGasLimit = 100000;
+        uint32 numWords =  2;
+        uint256 requestId = coordinator.requestRandomWords(
+            keyHash,
+            subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            numWords
+        );
+
         lotteryIdByRequestId[requestId] = _lotteryId;
 
         _lottery.state = State.CLOSED;
@@ -156,14 +169,14 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         emit WinnerRequested(_lotteryId, requestId);
     }
 
-    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomness)
         internal
         override
     {
         uint256 _lotteryId = lotteryIdByRequestId[requestId];
         Lottery storage _lottery = lotteryById[_lotteryId];
         address[] memory _participants = _lottery.participants;
-        address _winner = _participants[randomness % _participants.length];
+        address _winner = _participants[randomness[0] % _participants.length];
         _lottery.winner = _winner;
 
         (bool success, ) = _winner.call{value: _lottery.jackpot}("");
@@ -236,14 +249,6 @@ contract LotteryGame is VRFConsumerBase, KeeperCompatibleInterface {
         returns (Lottery memory)
     {
         return lotteryById[_lotteryId];
-    }
-
-    function getLinkBalance() public view returns (uint256) {
-        return LINK.balanceOf(address(this));
-    }
-
-    function withdrawLink() external {
-        LINK.transfer(owner, getLinkBalance());
     }
 
     function _checkIfTicketPriceIsValid(uint256 _ticketPrice) private pure {

@@ -8,46 +8,36 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { chainId } = network.config;
 
   let
-    linkTokenAddress,
     VRFCoordinatorAddress,
-    keyHash,
-    fee
+    subscriptionId
   ;
 
   if (chainId === 31337) {
-    const LinkTokenMock = await get("LinkToken");
-    const VRFCoordinatorMock = await get("VRFCoordinatorMock");
+    const VRFCoordinatorMock = await get("VRFCoordinatorV2Mock");
 
-    linkTokenAddress = LinkTokenMock.address;
     VRFCoordinatorAddress = VRFCoordinatorMock.address;
+    subscriptionId = 1;
   } else {
-    linkTokenAddress = networkConfig[chainId].linkTokenAddress;
     VRFCoordinatorAddress = networkConfig[chainId].VRFCoordinatorAddress;
+    subscriptionId = networkConfig[chainId].subscriptionId;
   }
 
-  keyHash = networkConfig[chainId].keyHash;
-  fee = networkConfig[chainId].fee;
+  const keyHash = networkConfig[chainId].keyHash;
+  const fee = networkConfig[chainId].fee;
 
-  const lottery = await deploy("LotteryGame", {
+
+  await deploy("LotteryGame", {
     from: deployer,
     args: [
       VRFCoordinatorAddress,
-      linkTokenAddress,
       keyHash,
-      BigNumber.from(fee)
+      BigNumber.from(fee),
+      subscriptionId
     ],
     log: true,
   });
 
   log("----------------------------------------------------");
-  log("Run the following command to fund contract with LINK:");
-  log(
-    'npx hardhat fund-link' +
-    ` --contract ${lottery.address}` +
-    ` --linkaddress ${linkTokenAddress}` +
-    ` --fundamount ${networkConfig[chainId].fundAmount}` +
-    ` --network ${networkConfig[chainId].name}`
-  );
 };
 
 module.exports.tags = ["all", "test"];
