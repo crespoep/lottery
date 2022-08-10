@@ -4,18 +4,9 @@ const helpers = require("@nomicfoundation/hardhat-network-helpers");
 const { BigNumber } = require("ethers");
 const {time} = require("@nomicfoundation/hardhat-network-helpers");
 
-const prepareForFundingWithLink =
-  (contractAddress, linkTokenAddress) => async () => {
-    await hre.run("fund-link", {
-      contract: contractAddress,
-      linkaddress: linkTokenAddress,
-    });
-  };
-
 describe('LotteryGame', () => {
   const TICKET_PRICE = ethers.constants.WeiPerEther;
   const DURATION = 60;
-  const RANDOM_NUMBER_EXAMPLE = 5;
   const OPTIONS = { value: TICKET_PRICE };
 
   let
@@ -24,11 +15,11 @@ describe('LotteryGame', () => {
     user2,
     LotteryGame,
     lotteryContract,
-    LinkToken,
-    linkTokenContract,
+    // LinkToken,
+    // linkTokenContract,
     VRFCoordinator,
     vrfCoordinatorContract,
-    fundWithLink
+    fundSubscriptionWithLink
   ;
 
   beforeEach(async () => {
@@ -37,17 +28,17 @@ describe('LotteryGame', () => {
     [deployer, user1, user2] = await ethers.getSigners();
 
     LotteryGame = await deployments.get("LotteryGame");
-    LinkToken = await deployments.get("LinkToken");
-    VRFCoordinator = await deployments.get("VRFCoordinatorMock");
+    // LinkToken = await deployments.get("LinkToken");
+    VRFCoordinator = await deployments.get("VRFCoordinatorV2Mock");
 
     lotteryContract = await ethers.getContractAt("LotteryGame", LotteryGame.address);
-    linkTokenContract = await ethers.getContractAt("LinkToken", LinkToken.address);
-    vrfCoordinatorContract = await ethers.getContractAt("VRFCoordinatorMock", VRFCoordinator.address);
+    // linkTokenContract = await ethers.getContractAt("LinkToken", LinkToken.address);
+    vrfCoordinatorContract = await ethers.getContractAt("VRFCoordinatorV2Mock", VRFCoordinator.address);
 
-    fundWithLink = prepareForFundingWithLink(
-      lotteryContract.address,
-      linkTokenContract.address
-    );
+    fundSubscriptionWithLink = async () => {
+      await vrfCoordinatorContract.createSubscription()
+      await vrfCoordinatorContract.fundSubscription(1, ethers.utils.parseEther("1"))
+    }
   })
 
   it('is deployed successfully', async () => {
@@ -192,7 +183,8 @@ describe('LotteryGame', () => {
     });
 
     it('should be reverted when users try to participate if lottery is not open anymore', async () => {
-      await fundWithLink();
+      await vrfCoordinatorContract.createSubscription()
+      await vrfCoordinatorContract.fundSubscription(1, ethers.utils.parseEther("1"))
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -250,8 +242,13 @@ describe('LotteryGame', () => {
   })
 
   describe("declaring winner", async () => {
+    beforeEach(async() => {
+      await vrfCoordinatorContract.createSubscription()
+      await vrfCoordinatorContract.fundSubscription(1, ethers.utils.parseEther("1"))
+    })
+
     it("should be reverted if the finalization time has not come yet", async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await expect(lotteryContract.declareWinner(1))
@@ -259,25 +256,14 @@ describe('LotteryGame', () => {
     });
 
     it("should be reverted if game that does not exist", async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await expect(lotteryContract.declareWinner(1))
         .to.be.revertedWith("LotteryDoesNotExist()");
     });
 
-    it('should be reverted if contract does not have enough LINK', async () => {
-      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-      await lotteryContract.connect(user1).participate(1, OPTIONS);
-      await lotteryContract.connect(user2).participate(1, OPTIONS);
-
-      await helpers.time.increase(DURATION)
-
-      await expect(lotteryContract.declareWinner(1))
-        .to.be.revertedWith("NotEnoughLINK()")
-    });
-
     it('requests a random number to the VRF coordinator', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -289,7 +275,7 @@ describe('LotteryGame', () => {
     });
 
     it('changes lottery state to closed', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -303,7 +289,7 @@ describe('LotteryGame', () => {
     });
 
     it('selects a winner', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -317,9 +303,8 @@ describe('LotteryGame', () => {
       const event = receipt.events.find(e => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
-      await expect(vrfCoordinatorContract.callBackWithRandomness(
+      await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       )).to.emit(
         lotteryContract,
@@ -331,7 +316,7 @@ describe('LotteryGame', () => {
     });
 
     it('removes lotteries from the collection of open lotteries', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.createLottery(TICKET_PRICE, DURATION * 2)
@@ -350,9 +335,8 @@ describe('LotteryGame', () => {
       const event = receipt.events.find(e => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
-      await expect(vrfCoordinatorContract.callBackWithRandomness(
+      await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       ))
 
@@ -362,7 +346,7 @@ describe('LotteryGame', () => {
     });
 
     it('transfer the jackpot to the winner', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -371,14 +355,14 @@ describe('LotteryGame', () => {
       await helpers.time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
+
       let receipt = await tx.wait()
 
       const event = receipt.events.find(e => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
-      await expect(await vrfCoordinatorContract.callBackWithRandomness(
+      await expect(await vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       )).to.changeEtherBalance(
         user2,
@@ -387,7 +371,7 @@ describe('LotteryGame', () => {
     });
 
     it('changes lottery state to WINNER_DECLARED when there is a winner', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -401,9 +385,8 @@ describe('LotteryGame', () => {
       const event = receipt.events.find(e => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
-      await expect(await vrfCoordinatorContract.callBackWithRandomness(
+      await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
-        RANDOM_NUMBER_EXAMPLE,
         lotteryContract.address
       ))
 
@@ -457,7 +440,7 @@ describe('LotteryGame', () => {
     });
 
     it('performUpkeep should call declare winner if conditions are met', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -472,7 +455,7 @@ describe('LotteryGame', () => {
     });
 
     it('checkUpkeep should return false for a lottery if its end time has come but its state is closed', async () => {
-      await fundWithLink();
+      await fundSubscriptionWithLink();
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
@@ -491,32 +474,4 @@ describe('LotteryGame', () => {
       await expect(upkeepNeeded[0]).to.be.false
     });
   })
-
-  it('returns the balance of LINK tokens in the contract', async () => {
-    await lotteryContract.createLottery(TICKET_PRICE, DURATION);
-    await lotteryContract.connect(user1).participate(1, OPTIONS);
-    await lotteryContract.connect(user2).participate(1, OPTIONS);
-
-    expect(await lotteryContract.getLinkBalance()).to.equal(0)
-
-    await fundWithLink();
-
-    expect(await lotteryContract.getLinkBalance()).to.equal(ethers.utils.parseEther("1"))
-  });
-
-  it('withdrawing works correctly', async () => {
-    const initialUserBalance = await linkTokenContract.balanceOf(deployer.address)
-
-    await fundWithLink();
-
-    let newUserBalance = await linkTokenContract.balanceOf(deployer.address)
-
-    expect(initialUserBalance).not.to.be.equal(newUserBalance)
-
-    await lotteryContract.withdrawLink();
-
-    newUserBalance = await linkTokenContract.balanceOf(deployer.address)
-
-    expect(initialUserBalance).to.be.equal(newUserBalance)
-  });
 })
