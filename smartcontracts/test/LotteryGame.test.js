@@ -15,8 +15,6 @@ describe('LotteryGame', () => {
     user2,
     LotteryGame,
     lotteryContract,
-    // LinkToken,
-    // linkTokenContract,
     VRFCoordinator,
     vrfCoordinatorContract,
     fundSubscriptionWithLink
@@ -25,14 +23,12 @@ describe('LotteryGame', () => {
   beforeEach(async () => {
     await deployments.fixture(["test"]);
 
-    [deployer, user1, user2] = await ethers.getSigners();
+    [deployer, user1, user2, user3] = await ethers.getSigners();
 
     LotteryGame = await deployments.get("LotteryGame");
-    // LinkToken = await deployments.get("LinkToken");
     VRFCoordinator = await deployments.get("VRFCoordinatorV2Mock");
 
     lotteryContract = await ethers.getContractAt("LotteryGame", LotteryGame.address);
-    // linkTokenContract = await ethers.getContractAt("LinkToken", LinkToken.address);
     vrfCoordinatorContract = await ethers.getContractAt("VRFCoordinatorV2Mock", VRFCoordinator.address);
 
     fundSubscriptionWithLink = async () => {
@@ -183,19 +179,20 @@ describe('LotteryGame', () => {
     });
 
     it('should be reverted when users try to participate if lottery is not open anymore', async () => {
-      await vrfCoordinatorContract.createSubscription()
-      await vrfCoordinatorContract.fundSubscription(1, ethers.utils.parseEther("1"))
+      await vrfCoordinatorContract.createSubscription();
+      await vrfCoordinatorContract.fundSubscription(1, ethers.utils.parseEther("1"));
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user2).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
       await lotteryContract.declareWinner(1)
 
       await expect(
-        lotteryContract.connect(user2).participate(1, OPTIONS)
-      ).to.be.revertedWith("LotteryClosedToNewParticipants()");
+        lotteryContract.connect(user3).participate(1, OPTIONS)
+      ).to.be.revertedWith("LotteryAlreadyClosed()");
     });
 
     it("should add a new user to the lottery correctly", async () => {
@@ -255,6 +252,33 @@ describe('LotteryGame', () => {
         .to.be.revertedWith("LotteryHasNotFinishedYet()")
     });
 
+    it('should be reverted if there is less than two participants', async () => {
+      await fundSubscriptionWithLink();
+
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
+
+      await helpers.time.increase(DURATION)
+
+      await expect(lotteryContract.declareWinner(1))
+        .to.be.revertedWith("NotEnoughParticipants()")
+    });
+
+    it('should be reverted if lottery is not open', async () => {
+      await fundSubscriptionWithLink();
+
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user2).participate(1, OPTIONS);
+
+      await helpers.time.increase(DURATION)
+
+      await expect(lotteryContract.declareWinner(1))
+
+      await expect(lotteryContract.declareWinner(1))
+        .to.be.revertedWith("LotteryAlreadyClosed()")
+    });
+
     it("should be reverted if game that does not exist", async () => {
       await fundSubscriptionWithLink();
 
@@ -267,6 +291,7 @@ describe('LotteryGame', () => {
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user2).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
@@ -279,6 +304,7 @@ describe('LotteryGame', () => {
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user2).participate(1, OPTIONS);
 
       await helpers.time.increase(DURATION)
 
