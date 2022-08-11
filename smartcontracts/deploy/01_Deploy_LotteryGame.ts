@@ -1,10 +1,13 @@
-const {BigNumber} = require("ethers");
-const { network } = require("hardhat");
-const { networkConfig } = require("../helper-hardhat-config");
+import {HardhatRuntimeEnvironment} from "hardhat/types";
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, get, log } = deployments;
-  const { deployer } = await getNamedAccounts();
+import { BigNumber } from "ethers";
+import { DeployFunction } from "hardhat-deploy/dist/types";
+const { networkConfig } = require("../helper-hardhat-config");
+const { network } = require("hardhat");
+
+const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+  const { deploy, get, log } = hre.deployments;
+  const { deployer } = await hre.getNamedAccounts();
   const { chainId } = network.config;
 
   let
@@ -24,8 +27,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const keyHash = networkConfig[chainId].keyHash;
   const fee = networkConfig[chainId].fee;
-
-
+  
   await deploy("LotteryGame", {
     from: deployer,
     args: [
@@ -40,4 +42,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   log("----------------------------------------------------");
 };
 
-module.exports.tags = ["all", "test"];
+export default func;
+func.tags = ["all", "test"];

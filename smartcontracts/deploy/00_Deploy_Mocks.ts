@@ -1,8 +1,10 @@
-const { network } = require("hardhat");
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { DeployFunction } from "hardhat-deploy/dist/types";
+import { network } from "hardhat";
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, log } = deployments;
-  const { deployer } = await getNamedAccounts();
+const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+  const { deploy, log } = hre.deployments;
+  const { deployer } = await hre.getNamedAccounts();
   const { chainId } = network.config;
 
   const BASE_FEE = "250000000000000000" // 0.25
@@ -24,5 +26,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     log("----------------------------------------------------");
   }
 };
-
-module.exports.tags = ["all", "test"];
+export default func;
+func.tags = ["all", "test"];
