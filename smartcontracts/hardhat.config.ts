@@ -3,12 +3,11 @@ require("dotenv").config();
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
-// require("@nomicfoundation/hardhat-toolbox");
-require("@nomicfoundation/hardhat-chai-matchers")
-require("@appliedblockchain/chainlink-plugins-fund-link");
-require("hardhat-deploy");
-require("./tasks/createLottery");
-require("./tasks/participate");
+import "@nomicfoundation/hardhat-chai-matchers"
+import "@appliedblockchain/chainlink-plugins-fund-link";
+import "hardhat-deploy";
+import "./tasks/createLottery";
+import "./tasks/participate";
 
 /** @type import('hardhat/config').HardhatUserConfig */
 const config: HardhatUserConfig = {
@@ -56,6 +55,10 @@ const config: HardhatUserConfig = {
     user2: {
       default: 2,
       4: 2
+    },
+    user3: {
+      default: 3,
+      4: 3
     }
   }
 };

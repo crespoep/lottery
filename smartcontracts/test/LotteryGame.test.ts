@@ -1,8 +1,11 @@
-const { expect } = require("chai");
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/src/signers";
+
+import { expect } from "chai";
+import { BigNumber } from "ethers";
+import { time } from "@nomicfoundation/hardhat-network-helpers"
+import { Contract } from "ethers";
+
 const { ethers, deployments } = require("hardhat");
-const helpers = require("@nomicfoundation/hardhat-network-helpers");
-const { BigNumber } = require("ethers");
-const {time} = require("@nomicfoundation/hardhat-network-helpers");
 
 describe('LotteryGame', () => {
   const TICKET_PRICE = ethers.constants.WeiPerEther;
@@ -10,14 +13,15 @@ describe('LotteryGame', () => {
   const OPTIONS = { value: TICKET_PRICE };
 
   let
-    deployer,
-    user1,
-    user2,
+    deployer: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress,
+    user3: SignerWithAddress,
     LotteryGame,
-    lotteryContract,
+    lotteryContract: Contract,
     VRFCoordinator,
-    vrfCoordinatorContract,
-    fundSubscriptionWithLink
+    vrfCoordinatorContract: Contract,
+    fundSubscriptionWithLink: Function
   ;
 
   beforeEach(async () => {
@@ -72,7 +76,7 @@ describe('LotteryGame', () => {
       const receipt = await tx.wait();
       const blockNumber = receipt.blockNumber;
       const timestamp = (await ethers.provider.getBlock(blockNumber)).timestamp;
-      const event = receipt.events.find(e => e.event === "LotteryCreated")
+      const event = receipt.events.find((e: any) => e.event === "LotteryCreated")
       expect(event.event).to.equal("LotteryCreated")
       expect(event.args.id).to.equal(1)
       expect(event.args.ticketPrice).to.equal(TICKET_PRICE)
@@ -186,7 +190,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       await lotteryContract.declareWinner(1)
 
@@ -222,8 +226,8 @@ describe('LotteryGame', () => {
 
       const participations = await lotteryContract.getParticipationsByUser(user1.address);
       expect(
-        participations.map(val => val.toNumber())
-      ).deep.to.equal([1, 2])
+        participations.map((val: any) => val.toNumber())
+      ).deep.equal([1, 2])
     });
 
     it("should increment the jackpot correctly", async () => {
@@ -258,7 +262,7 @@ describe('LotteryGame', () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       await expect(lotteryContract.declareWinner(1))
         .to.be.revertedWithCustomError(lotteryContract, "NotEnoughParticipants")
@@ -271,7 +275,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       await expect(lotteryContract.declareWinner(1))
 
@@ -293,7 +297,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       await expect(lotteryContract.declareWinner(1))
         .to.emit(lotteryContract, "WinnerRequested")
@@ -306,7 +310,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       await lotteryContract.declareWinner(1);
 
@@ -321,12 +325,12 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
 
-      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
@@ -349,16 +353,16 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       let openLotteriesIds = await lotteryContract.getOpenLotteriesIds()
       expect(openLotteriesIds).to.have.lengthOf(2);
-      expect(openLotteriesIds.map(val => val.toNumber())).deep.to.equal([1, 2])
+      expect(openLotteriesIds.map((val: any) => val.toNumber())).deep.equal([1, 2])
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
 
-      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
@@ -368,7 +372,7 @@ describe('LotteryGame', () => {
 
       openLotteriesIds = await lotteryContract.getOpenLotteriesIds()
       expect(openLotteriesIds).to.have.lengthOf(1);
-      expect(openLotteriesIds.map(val => val.toNumber())).deep.to.equal([2])
+      expect(openLotteriesIds.map((val: any) => val.toNumber())).deep.equal([2])
     });
 
     it('transfer the jackpot to the winner', async () => {
@@ -378,13 +382,13 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
 
       let receipt = await tx.wait()
 
-      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
       await expect(await vrfCoordinatorContract.fulfillRandomWords(
@@ -403,12 +407,12 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
 
-      const event = receipt.events.find(e => e.event === "WinnerRequested")
+      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
       const requestId = event.args.requestId
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
@@ -444,7 +448,7 @@ describe('LotteryGame', () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION);
+      await time.increase(DURATION);
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -457,7 +461,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -472,7 +476,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       const upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
@@ -487,7 +491,7 @@ describe('LotteryGame', () => {
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
 
-      await helpers.time.increase(DURATION)
+      await time.increase(DURATION)
 
       let upkeepNeeded = (await lotteryContract.checkUpkeep("0x00"))
 
