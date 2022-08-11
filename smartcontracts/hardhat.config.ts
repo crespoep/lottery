@@ -1,17 +1,17 @@
 require("dotenv").config();
 
-require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-etherscan");
-// require("@nomiclabs/hardhat-solhint");
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+
+// require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-chai-matchers")
 require("@appliedblockchain/chainlink-plugins-fund-link");
 require("hardhat-deploy");
-require("hardhat-gas-reporter");
-require("solidity-coverage");
 require("./tasks/createLottery");
 require("./tasks/participate");
 
 /** @type import('hardhat/config').HardhatUserConfig */
-module.exports = {
+const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
@@ -29,6 +29,7 @@ module.exports = {
     kovan: {
       url: process.env.KOVAN_URL,
       chainId: 42,
+      // @ts-ignore
       accounts: [
         process.env.PRIVATE_KEY_DEPLOYER,
         process.env.PRIVATE_KEY_USER1,
@@ -58,3 +59,5 @@ module.exports = {
     }
   }
 };
+
+export default config;
