@@ -51,20 +51,20 @@ describe('LotteryGame', () => {
       const invalidTicketPrice = 0;
       await expect(
         lotteryContract.createLottery(invalidTicketPrice, DURATION)
-      ).to.be.revertedWith("TicketPriceNotGreaterThanZero()");
+      ).to.be.revertedWithCustomError(lotteryContract, "TicketPriceNotGreaterThanZero");
     });
 
     it('should be reverted if duration is less than 60 seconds', async () => {
       const invalidDuration = 50;
       await expect(
         lotteryContract.createLottery(TICKET_PRICE, invalidDuration)
-      ).to.be.revertedWith("LotteryDurationNotEnough()");
+      ).to.be.revertedWithCustomError(lotteryContract, "LotteryDurationNotEnough");
     });
 
     it('should be reverted if anyone other than the admin tries to create a lottery', async () => {
       await expect(
         lotteryContract.connect(user1).createLottery(TICKET_PRICE, DURATION)
-      ).to.be.revertedWith("CallerIsNotTheOwner()");
+      ).to.be.revertedWithCustomError(lotteryContract, "CallerIsNotTheOwner");
     });
 
     it('should emit LotteryCreated event', async () => {
@@ -148,34 +148,34 @@ describe('LotteryGame', () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await expect(
         lotteryContract.participate(1, OPTIONS)
-      ).to.be.revertedWith("OwnerCannotParticipateInLotteries()")
+      ).to.be.revertedWithCustomError(lotteryContract, "OwnerCannotParticipateInLotteries")
     });
 
     it('should be reverted when trying to participate without exact payment', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await expect(lotteryContract.connect(user1).participate(1))
-        .to.be.revertedWith("TicketPaymentIsNotExact()");
+        .to.be.revertedWithCustomError(lotteryContract, "TicketPaymentIsNotExact");
       await expect(
         lotteryContract.connect(user1).participate(1, {
           value: ethers.utils.parseEther("1.1"),
         })
-      ).to.be.revertedWith("TicketPaymentIsNotExact()");
+      ).to.be.revertedWithCustomError(lotteryContract, "TicketPaymentIsNotExact");
       await expect(
         lotteryContract.connect(user1).participate(1, {
           value: ethers.utils.parseEther("0.9"),
         })
-      ).to.be.revertedWith("TicketPaymentIsNotExact()");
+      ).to.be.revertedWithCustomError(lotteryContract, "TicketPaymentIsNotExact");
     });
 
     it('should be reverted when trying to participate in an nonexistent lottery', async () => {
       await expect(lotteryContract.connect(user1).participate(1))
-        .to.be.revertedWith("LotteryDoesNotExist()");
+        .to.be.revertedWithCustomError(lotteryContract, "LotteryDoesNotExist");
     });
 
     it('should be reverted when users try to participate twice', async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
-      await expect(lotteryContract.connect(user1).participate(1, OPTIONS)).to.be.revertedWith("UserHasAlreadyParticipated()")
+      await expect(lotteryContract.connect(user1).participate(1, OPTIONS)).to.be.revertedWithCustomError(lotteryContract, "UserHasAlreadyParticipated")
     });
 
     it('should be reverted when users try to participate if lottery is not open anymore', async () => {
@@ -192,7 +192,7 @@ describe('LotteryGame', () => {
 
       await expect(
         lotteryContract.connect(user3).participate(1, OPTIONS)
-      ).to.be.revertedWith("LotteryAlreadyClosed()");
+      ).to.be.revertedWithCustomError(lotteryContract, "LotteryAlreadyClosed");
     });
 
     it("should add a new user to the lottery correctly", async () => {
@@ -249,7 +249,7 @@ describe('LotteryGame', () => {
 
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await expect(lotteryContract.declareWinner(1))
-        .to.be.revertedWith("LotteryHasNotFinishedYet()")
+        .to.be.revertedWithCustomError(lotteryContract, "LotteryHasNotFinishedYet")
     });
 
     it('should be reverted if there is less than two participants', async () => {
@@ -261,7 +261,7 @@ describe('LotteryGame', () => {
       await helpers.time.increase(DURATION)
 
       await expect(lotteryContract.declareWinner(1))
-        .to.be.revertedWith("NotEnoughParticipants()")
+        .to.be.revertedWithCustomError(lotteryContract, "NotEnoughParticipants")
     });
 
     it('should be reverted if lottery is not open', async () => {
@@ -276,14 +276,14 @@ describe('LotteryGame', () => {
       await expect(lotteryContract.declareWinner(1))
 
       await expect(lotteryContract.declareWinner(1))
-        .to.be.revertedWith("LotteryAlreadyClosed()")
+        .to.be.revertedWithCustomError(lotteryContract, "LotteryAlreadyClosed")
     });
 
     it("should be reverted if game that does not exist", async () => {
       await fundSubscriptionWithLink();
 
       await expect(lotteryContract.declareWinner(1))
-        .to.be.revertedWith("LotteryDoesNotExist()");
+        .to.be.revertedWithCustomError(lotteryContract, "LotteryDoesNotExist");
     });
 
     it('requests a random number to the VRF coordinator', async () => {
