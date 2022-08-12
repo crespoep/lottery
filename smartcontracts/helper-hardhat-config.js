@@ -10,7 +10,6 @@ const networkConfig = {
     name: "localhost",
     VRFCoordinatorAddress: "",
     keyHash: "0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311",
-    fee: "100000000000000000", // 0.1 LINK
     subscriptionId: "123456"
   },
   // Mainnet
@@ -18,7 +17,6 @@ const networkConfig = {
     name: "mainnet",
     VRFCoordinatorAddress: "",
     keyHash: "",
-    fee: "100000000000000000", // 0.1 LINK
     subscriptionId: ""
   },
   // Kovan
@@ -26,9 +24,15 @@ const networkConfig = {
     name: "kovan",
     VRFCoordinatorAddress: "0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9",
     keyHash: "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4",
-    fee: "100000000000000000", // 0.1 LINK
-    subscriptionId: ""
+    subscriptionId: "1"
   },
+  // Mumbai
+  80001: {
+    name: "mumbai",
+    VRFCoordinatorAddress: "0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed",
+    keyHash: "0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f",
+    subscriptionId: "1"
+  }
 };
 
 module.exports = {

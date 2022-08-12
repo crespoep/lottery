@@ -48,7 +48,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     VRFCoordinatorV2Interface private coordinator;
 
     uint64 public subscriptionId;
-    uint256 internal fee;
 
     address public owner;
 
@@ -98,12 +97,10 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     constructor(
         address _vrfCoordinatorAddress,
         bytes32 _keyHash,
-        uint256 _fee,
         uint64 _subscriptionId
     ) VRFConsumerBaseV2(_vrfCoordinatorAddress) {
         coordinator = VRFCoordinatorV2Interface(_vrfCoordinatorAddress);
         keyHash = _keyHash;
-        fee = _fee;
         subscriptionId = _subscriptionId;
         owner = msg.sender;
     }

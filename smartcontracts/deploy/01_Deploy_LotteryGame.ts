@@ -1,6 +1,4 @@
-import {HardhatRuntimeEnvironment} from "hardhat/types";
-
-import { BigNumber } from "ethers";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/dist/types";
 const { networkConfig } = require("../helper-hardhat-config");
 const { network } = require("hardhat");
@@ -26,14 +24,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   const keyHash = networkConfig[chainId].keyHash;
-  const fee = networkConfig[chainId].fee;
-  
+
   await deploy("LotteryGame", {
     from: deployer,
     args: [
       VRFCoordinatorAddress,
       keyHash,
-      BigNumber.from(fee),
       subscriptionId
     ],
     log: true,
