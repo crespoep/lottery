@@ -36,6 +36,16 @@ const config: HardhatUserConfig = {
       ].filter(
         x => x !== undefined
       )
+    },
+    mumbai: {
+      url: process.env.MUMBAI_URL || "",
+      chainId: 80001,
+      // @ts-ignore
+      accounts: [
+        process.env.PRIVATE_KEY_DEPLOYER,
+        process.env.PRIVATE_KEY_USER_2,
+        process.env.PRIVATE_KEY_USER_3,
+      ].filter((x) => x !== undefined),
     }
   },
   etherscan: {
