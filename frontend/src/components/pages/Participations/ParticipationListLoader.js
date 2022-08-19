@@ -2,54 +2,31 @@ import {useEffect, useState} from "react";
 import {ethers} from "ethers";
 import logo from "../../../assets/img/eth-logo.png";
 import { useOutletContext } from "react-router-dom"
-import contractAddress from "../../../contracts/contract-address.json";
-import LotteryArtifact from "../../../contracts/LotteryGame.json";
 import ParticipationFilterButton from "./ParticipationFilterButton";
 import Message from "./../../Message";
 import withLoading from "../../withLoading";
+import { getParticipationsByUser } from "../../../services/contractApi";
 
 const ParticipationListLoader = () => {
   const [ account ] = useOutletContext()
-  const [ contract, setContract ] = useState(null)
   const [ won, setWon ] = useState(true)
   const [ participations, setParticipations ] = useState([])
   const [ loading, setLoading ] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-
-    const { ethereum } = window;
-    const provider = new ethers.providers.Web3Provider(ethereum);
-
-    const lotteryContract = new ethers.Contract(
-      contractAddress.Lottery,
-      LotteryArtifact.abi,
-      provider.getSigner(0)
-    );
-
-    setContract(lotteryContract)
-  }, [])
-
-  useEffect(() => {
     const fetchParticipations = async () => {
       try {
-        if (contract && account) {
-          const participationIds = await contract.getParticipationsByUser(ethers.utils.getAddress(account))
+        const participations = await getParticipationsByUser()
 
-          const participations = await Promise.all(
-            participationIds.map(async (id) => await contract.getLottery(id))
-          )
-
-          setParticipations(participations)
-          setLoading(false);
-        }
+        setParticipations(participations)
+        setLoading(false);
       } catch (e) {
         setLoading(false)
         console.log("Check your network: ", e)
       }
     }
     fetchParticipations()
-  }, [contract, account])
+  }, [account])
 
   const filteredParticipations = participations.filter(
     participation => {
