@@ -1,66 +1,31 @@
 import {useEffect, useState} from "react";
 import { ethers } from "ethers";
 import logo from "../../../assets/img/eth-logo.png";
-import contractAddress from "../../../contracts/contract-address.json";
-import LotteryArtifact from "../../../contracts/LotteryGame.json";
 import { lotteryStates } from "../../../contractEnumStates";
-import Message from "./../../Message";
 import {useOutletContext} from "react-router-dom";
+import { getOpenLotteries, participate } from "../../../services/contractApi";
+import Message from "./../../Message";
 import withLoading from "../../withLoading";
 
 const LotteryListLoader = () => {
   const [ account ] = useOutletContext()
-  const [ lotteryContract, setLotteryContract ] = useState(null)
   const [ lotteries, setLotteries ] = useState([])
   const [ loading, setLoading ] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-
-    const { ethereum } = window;
-    const provider = new ethers.providers.Web3Provider(ethereum);
-
-    const lotteryContract = new ethers.Contract(
-      contractAddress.Lottery,
-      LotteryArtifact.abi,
-      provider.getSigner(0)
-    )
-
-    setLotteryContract(lotteryContract)
-  }, [])
-
-  useEffect(() => {
-    const getNumber = async () => {
+    const fetchOpenLotteries = async () => {
       try {
-        if (lotteryContract) {
-          const lotteriesIds = await lotteryContract.getOpenLotteriesIds()
+        const lotteries = await getOpenLotteries();
 
-          const lotteries = await Promise.all(lotteriesIds.map(
-            async (id) => await lotteryContract.getLottery(id)
-          ))
-
-          setLotteries(lotteries)
-          setLoading(false)
-        }
+        setLotteries(lotteries)
+        setLoading(false)
       } catch (e) {
         setLoading(false)
         console.log("Check your network: ", e)
       }
     }
-    getNumber()
-  }, [lotteryContract])
-
-  const participate = async (id, ticket) => {
-    const { ethereum } = window;
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner()
-    await lotteryContract.connect(signer).participate(
-      parseInt(id),
-      {
-        value: ticket.toString(),
-      }
-    )
-  }
+    fetchOpenLotteries()
+  }, [])
 
   const hasParticipated = participants => {
     if (account) {
@@ -78,7 +43,6 @@ const LotteryListLoader = () => {
           isLoading={loading}
           lotteries={lotteries}
           hasParticipated={hasParticipated}
-          participate={participate}
         />
       }
     </div>
@@ -88,7 +52,6 @@ const LotteryListLoader = () => {
 const LotteryList = ({
   lotteries,
   hasParticipated,
-  participate
 }) => {
   return (
     lotteries.length > 0
@@ -100,7 +63,6 @@ const LotteryList = ({
                 <Lottery
                   {...lottery}
                   hasParticipated={hasParticipated(lottery.participants)}
-                  participate={participate}
                 />
               </div>
           )
@@ -117,7 +79,6 @@ const Lottery = ({
   participants,
   endTime,
   state,
-  participate,
   hasParticipated
 }) => {
   const lotteryState = lotteryStates[state];
@@ -127,8 +88,8 @@ const Lottery = ({
   const getDate = finalizationTime =>
     (new Date(finalizationTime.toNumber() * 1000)).toTimeString()
 
-  const participateWithId = () => {
-    participate(id, ticket)
+  const participateWithId = async () => {
+    await participate(id, ticket)
   }
 
   return (
