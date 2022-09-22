@@ -20,8 +20,9 @@ error TransferToWinnerFailed();
 error NotEnoughParticipants();
 error LotteryAlreadyClosed();
 
-/// @author Pedro Crespo
-/// @title Crypto lottery game
+/** @author Pedro Crespo
+ *  @title Crypto lottery game
+ */
 contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
 
@@ -108,11 +109,13 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         owner = msg.sender;
     }
 
-    /// @param _ticket amount of money needed to participate in the lottery
-    /// @param _duration how much time the lottery will last in seconds
-    /// @dev creates a new lottery
+    /**
+     *  @dev creates a new lottery
+     *  @param _ticket amount of money needed to participate in the lottery
+     *  @param _duration how much time the lottery will last in seconds
+     */
     function createLottery(uint256 _ticket, uint256 _duration)
-        public
+        external
         onlyOwner
     {
         _checkIfTicketPriceIsValid(_ticket);
@@ -138,8 +141,10 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit LotteryCreated(_currentId, _ticket, _endTime);
     }
 
-    /// @dev adds the caller as a new participant to correspondent lottery
-    /// @param _lotteryId lottery id
+    /**
+     *  @dev adds the caller as a new participant to correspondent lottery
+     *  @param _lotteryId lottery id
+     */
     function participate(uint256 _lotteryId)
         external
         payable
@@ -158,6 +163,74 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         participationsByUser[msg.sender].push(_lotteryId);
 
         emit ParticipationRegistered(_lotteryId, msg.sender);
+    }
+
+    /**
+     *  @dev called by keeper to check if at least one lottery is ready to be closed
+             It returns the first one ready to closed that it finds.
+     *  @param not used
+     *  @return a tuple with boolean and the encoded lottery id to be closed if exists
+     */
+    function checkUpkeep(bytes calldata)
+        external
+        view
+        override
+        returns (bool, bytes memory)
+    {
+        bool upkeepNeeded = false;
+        bytes memory data = bytes("");
+
+        for (uint256 i = 0; i < openLotteries.length; i++) {
+            uint256 _lotteryId = openLotteries[i];
+            Lottery memory _lottery = lotteryById[_lotteryId];
+
+            if (_keeperConditionsPassed(_lottery)) {
+                upkeepNeeded = true;
+                data = abi.encode(_lotteryId);
+            }
+        }
+
+        return (upkeepNeeded, data);
+    }
+
+    /**
+     *  @dev called by keeper to initiate the process of requesting a random number
+     *       and establish a winner for a specific lottery, after checking again if
+     *       conditions are meet for security reasons
+     *  @param performData encoded id for the lottery sent by checkUpkeep
+     */
+    function performUpkeep(bytes calldata performData) external override {
+        uint256 _lotteryId = abi.decode(performData, (uint256));
+        Lottery memory _lottery = lotteryById[_lotteryId];
+        if (_keeperConditionsPassed(_lottery)) {
+            declareWinner(_lotteryId);
+        }
+    }
+
+    /**
+     *  @dev returns a list of lotteries ids which user has participated in
+     *  @param _user the user address
+     *  @return the list of the participations
+     */
+    function getParticipationsByUser(address _user)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return participationsByUser[_user];
+    }
+
+    /**
+     *  @dev returns a lottery by id
+     *  @param _lotteryId the lottery id
+     *  @return the lottery
+     */
+    function getLottery(uint256 _lotteryId)
+        external
+        view
+        returns (Lottery memory)
+    {
+        return lotteryById[_lotteryId];
     }
 
     /** @dev Requests a random number to oracles and closes the correspondent lottery.
@@ -185,6 +258,15 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         _lottery.state = State.CLOSED;
 
         emit WinnerRequested(_lotteryId, requestId);
+    }
+
+    /**
+     *  @dev returns the ids of the lotteries where winner has not been established yet.
+     *       The lotteries may be already closed and randomness requested but not received.
+     *  @return the list of lotteries ids
+     */
+    function getOpenLotteriesIds() public view returns (uint256[] memory) {
+        return openLotteries;
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomness)
@@ -217,56 +299,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit WinnerDeclared(_lotteryId, _winner);
 
         delete lotteryIdByRequestId[requestId];
-    }
-
-    function checkUpkeep(bytes calldata)
-        external
-        view
-        override
-        returns (bool, bytes memory)
-    {
-        bool upkeepNeeded = false;
-        bytes memory data = bytes("");
-
-        for (uint256 i = 0; i < openLotteries.length; i++) {
-            uint256 _lotteryId = openLotteries[i];
-            Lottery memory _lottery = lotteryById[_lotteryId];
-
-            if (_keeperConditionsPassed(_lottery)) {
-                upkeepNeeded = true;
-                data = abi.encode(_lotteryId);
-            }
-        }
-
-        return (upkeepNeeded, data);
-    }
-
-    function performUpkeep(bytes calldata performData) external override {
-        uint256 _lotteryId = abi.decode(performData, (uint256));
-        Lottery memory _lottery = lotteryById[_lotteryId];
-        if (_keeperConditionsPassed(_lottery)) {
-            declareWinner(_lotteryId);
-        }
-    }
-
-    function getOpenLotteriesIds() public view returns (uint256[] memory) {
-        return openLotteries;
-    }
-
-    function getParticipationsByUser(address _user)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return participationsByUser[_user];
-    }
-
-    function getLottery(uint256 _lotteryId)
-        external
-        view
-        returns (Lottery memory)
-    {
-        return lotteryById[_lotteryId];
     }
 
     function _checkIfTicketPriceIsValid(uint256 _ticketPrice) private pure {
