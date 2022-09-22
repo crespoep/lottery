@@ -6,7 +6,6 @@
   "scripts": {
     "deploy": "hardhat deploy",
     "deploy:testnet": "hardhat deploy --network kovan",
-    "test": "mocha --require hardhat/register --exit",
     "solhint": "solhint 'contracts/**/*.sol'",
     "prettier": "prettier --write 'contracts/**/*.sol'"
   },
