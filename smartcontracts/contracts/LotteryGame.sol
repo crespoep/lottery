@@ -20,14 +20,10 @@ error TransferToWinnerFailed();
 error NotEnoughParticipants();
 error LotteryAlreadyClosed();
 
+/// @author Pedro Crespo
+/// @title Crypto lottery game
 contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
-
-    uint16 private constant REQUEST_CONFIRMATIONS = 3;
-    uint32 private constant CALLBACK_GAS_LIMIT = 100000;
-    uint32 private constant NUM_WORDS = 1;
-
-    Counters.Counter public lotteryId;
 
     struct Lottery {
         uint256 id;
@@ -45,9 +41,18 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         WINNER_DECLARED
     }
 
-    VRFCoordinatorV2Interface private coordinator;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+
+    uint32 private constant CALLBACK_GAS_LIMIT = 100000;
+    uint32 private constant NUM_WORDS = 1;
 
     uint64 public subscriptionId;
+
+    bytes32 internal keyHash;
+
+    Counters.Counter public lotteryId;
+
+    VRFCoordinatorV2Interface private coordinator;
 
     address public owner;
 
@@ -57,8 +62,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     uint256[] public openLotteries;
     uint256[] public randomWords;
-
-    bytes32 internal keyHash;
 
     event LotteryCreated(
         uint256 indexed id,
@@ -105,6 +108,9 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         owner = msg.sender;
     }
 
+    /// @param _ticket amount of money needed to participate in the lottery
+    /// @param _duration how much time the lottery will last in seconds
+    /// @dev creates a new lottery
     function createLottery(uint256 _ticket, uint256 _duration)
         public
         onlyOwner
@@ -132,6 +138,8 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit LotteryCreated(_currentId, _ticket, _endTime);
     }
 
+    /// @dev adds the caller as a new participant to correspondent lottery
+    /// @param _lotteryId lottery id
     function participate(uint256 _lotteryId)
         external
         payable
@@ -152,6 +160,11 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit ParticipationRegistered(_lotteryId, msg.sender);
     }
 
+    /** @dev Requests a random number to oracles and closes the correspondent lottery.
+     *       Reverts if the end time has not come yet, if there are not at least two participants or if
+     *       this method is called again after randomness is requested but not done.
+     *  @param _lotteryId lottery id
+     */
     function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
         Lottery storage _lottery = lotteryById[_lotteryId];
 
@@ -286,7 +299,10 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         }
     }
 
-    function _checkIfThereAreEnoughParticipants(uint256 _numberOfParticipants) private pure {
+    function _checkIfThereAreEnoughParticipants(uint256 _numberOfParticipants)
+        private
+        pure
+    {
         if (_numberOfParticipants < 2) {
             revert NotEnoughParticipants();
         }
