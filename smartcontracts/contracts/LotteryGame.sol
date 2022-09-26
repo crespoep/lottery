@@ -60,6 +60,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     mapping(uint256 => Lottery) private lotteryById;
     mapping(uint256 => uint256) private lotteryIdByRequestId;
     mapping(address => uint256[]) private participationsByUser;
+    mapping(address => uint256) public balances;
 
     uint256[] public openLotteries;
     uint256[] public randomWords;
@@ -168,7 +169,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     /**
      *  @dev called by keeper to check if at least one lottery is ready to be closed
      *       It returns the first one ready to closed that it finds.
-     *  @param not used
      *  @return a tuple with boolean and the encoded lottery id to be closed if exists
      */
     function checkUpkeep(bytes calldata)
@@ -279,11 +279,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         address _winner = _participants[randomness[0] % _participants.length];
         _lottery.winner = _winner;
 
-        (bool success, ) = _winner.call{value: _lottery.jackpot}("");
-
-        if (!success) {
-            revert TransferToWinnerFailed();
-        }
+        balances[_winner] += _lottery.jackpot;
 
         _lottery.state = State.WINNER_DECLARED;
 
