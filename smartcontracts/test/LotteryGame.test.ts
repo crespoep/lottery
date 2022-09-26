@@ -4,6 +4,8 @@ import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers"
 import { Contract } from "ethers";
+// @ts-ignore
+import { LotteryGame } from "../typechain-types";
 
 const { ethers, deployments } = require("hardhat");
 
@@ -18,7 +20,7 @@ describe('LotteryGame', () => {
     user2: SignerWithAddress,
     user3: SignerWithAddress,
     LotteryGame,
-    lotteryContract: Contract,
+    lotteryContract: LotteryGame,
     VRFCoordinator,
     vrfCoordinatorContract: Contract,
     fundSubscriptionWithLink: Function
@@ -76,11 +78,12 @@ describe('LotteryGame', () => {
       const receipt = await tx.wait();
       const blockNumber = receipt.blockNumber;
       const timestamp = (await ethers.provider.getBlock(blockNumber)).timestamp;
-      const event = receipt.events.find((e: any) => e.event === "LotteryCreated")
-      expect(event.event).to.equal("LotteryCreated")
-      expect(event.args.id).to.equal(1)
-      expect(event.args.ticketPrice).to.equal(TICKET_PRICE)
-      expect(event.args.endDate).to.equal(timestamp + DURATION)
+      const event = receipt?.events?.find((e: any) => e.event === "LotteryCreated")
+      const args = event?.args
+      expect(event?.event).to.equal("LotteryCreated")
+      expect(args?.id).to.equal(1)
+      expect(args?.ticketPrice).to.equal(TICKET_PRICE)
+      expect(args?.endDate).to.equal(timestamp + DURATION)
     });
 
     it('increments the number of games', async () => {
@@ -328,8 +331,8 @@ describe('LotteryGame', () => {
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
 
-      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
-      const requestId = event.args.requestId
+      const event = receipt?.events?.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event?.args?.requestId
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
@@ -360,8 +363,8 @@ describe('LotteryGame', () => {
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
 
-      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
-      const requestId = event.args.requestId
+      const event = receipt?.events?.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event?.args?.requestId
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
@@ -385,8 +388,8 @@ describe('LotteryGame', () => {
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
   
-      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
-      const requestId = event.args.requestId
+      const event = receipt?.events?.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event?.args?.requestId
   
       await vrfCoordinatorContract.fulfillRandomWords(
         requestId,
@@ -408,8 +411,8 @@ describe('LotteryGame', () => {
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
 
-      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
-      const requestId = event.args.requestId
+      const event = receipt?.events?.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event?.args?.requestId
 
       await expect(vrfCoordinatorContract.fulfillRandomWords(
         requestId,
@@ -434,8 +437,8 @@ describe('LotteryGame', () => {
       let tx = await lotteryContract.declareWinner(1)
       let receipt = await tx.wait()
   
-      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
-      const requestId = event.args.requestId
+      const event = receipt?.events?.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event?.args?.requestId
   
       await vrfCoordinatorContract.fulfillRandomWords(
         requestId,

@@ -1,0 +1,9 @@
+#Smart contract
+node_modules
+artifacts
+cache
+deployments
+.env
+coverage.json
+coverage
+typechain-types
