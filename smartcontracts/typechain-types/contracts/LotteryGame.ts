@@ -68,7 +68,6 @@ export interface LotteryGameInterface extends utils.Interface {
     "getOpenLotteriesIds()": FunctionFragment;
     "getParticipationsByUser(address)": FunctionFragment;
     "lotteryId()": FunctionFragment;
-    "openLotteries(uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "participate(uint256)": FunctionFragment;
     "performUpkeep(bytes)": FunctionFragment;
@@ -88,7 +87,6 @@ export interface LotteryGameInterface extends utils.Interface {
       | "getOpenLotteriesIds"
       | "getParticipationsByUser"
       | "lotteryId"
-      | "openLotteries"
       | "owner"
       | "participate"
       | "performUpkeep"
@@ -127,10 +125,6 @@ export interface LotteryGameInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(functionFragment: "lotteryId", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "openLotteries",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "participate",
@@ -177,10 +171,6 @@ export interface LotteryGameInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "lotteryId", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "openLotteries",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "participate",
@@ -327,11 +317,6 @@ export interface LotteryGame extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _value: BigNumber }>;
 
-    openLotteries(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     participate(
@@ -397,11 +382,6 @@ export interface LotteryGame extends BaseContract {
 
   lotteryId(overrides?: CallOverrides): Promise<BigNumber>;
 
-  openLotteries(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   owner(overrides?: CallOverrides): Promise<string>;
 
   participate(
@@ -466,11 +446,6 @@ export interface LotteryGame extends BaseContract {
     ): Promise<BigNumber[]>;
 
     lotteryId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    openLotteries(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -576,11 +551,6 @@ export interface LotteryGame extends BaseContract {
 
     lotteryId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    openLotteries(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     participate(
@@ -648,11 +618,6 @@ export interface LotteryGame extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     lotteryId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    openLotteries(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

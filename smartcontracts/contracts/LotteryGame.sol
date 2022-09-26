@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 error TicketPriceNotGreaterThanZero();
 error LotteryDurationNotEnough();
@@ -25,6 +26,9 @@ error LotteryAlreadyClosed();
  */
 contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
+
+    using EnumerableSet for EnumerableSet.UintSet;
+
 
     struct Lottery {
         uint256 id;
@@ -52,6 +56,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     bytes32 internal keyHash;
 
     Counters.Counter public lotteryId;
+    EnumerableSet.UintSet private openLotteries;
 
     VRFCoordinatorV2Interface private coordinator;
 
@@ -62,7 +67,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     mapping(address => uint256[]) private participationsByUser;
     mapping(address => uint256) public balances;
 
-    uint256[] public openLotteries;
     uint256[] public randomWords;
 
     event LotteryCreated(
@@ -137,7 +141,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
             state: State.OPEN
         });
 
-        openLotteries.push(_currentId);
+        openLotteries.add(_currentId);
 
         emit LotteryCreated(_currentId, _ticket, _endTime);
     }
@@ -180,8 +184,8 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         bool upkeepNeeded = false;
         bytes memory data = bytes("");
 
-        for (uint256 i = 0; i < openLotteries.length; i++) {
-            uint256 _lotteryId = openLotteries[i];
+        for (uint256 i = 0; i < openLotteries.length(); i++) {
+            uint256 _lotteryId = openLotteries.at(i);
             Lottery memory _lottery = lotteryById[_lotteryId];
 
             if (_keeperConditionsPassed(_lottery)) {
@@ -266,7 +270,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *  @return the list of lotteries ids
      */
     function getOpenLotteriesIds() public view returns (uint256[] memory) {
-        return openLotteries;
+        return openLotteries.values();
     }
 
     function withdraw() external {
@@ -290,14 +294,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
         _lottery.state = State.WINNER_DECLARED;
 
-        for (uint256 i = 0; i < openLotteries.length; i++) {
-            uint256 _openLotteryId = openLotteries[i];
-            Lottery memory _openLottery = lotteryById[_openLotteryId];
-            if (_lotteryId == _openLottery.id) {
-                openLotteries[i] = openLotteries[openLotteries.length - 1];
-                openLotteries.pop();
-            }
-        }
+        openLotteries.remove(_lotteryId);
 
         emit WinnerDeclared(_lotteryId, _winner);
 
