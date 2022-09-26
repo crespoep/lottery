@@ -167,8 +167,8 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     }
 
     /**
-     *  @dev called by keeper to check if at least one lottery is ready to be closed
-     *       It returns the first one ready to closed that it finds.
+     *  @dev called by keepers to check if at least one lottery is ready to be closed
+     *       It returns the first one ready to be closed that it finds.
      *  @return a tuple with boolean and the encoded lottery id to be closed if exists
      */
     function checkUpkeep(bytes calldata)
@@ -241,9 +241,9 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     function declareWinner(uint256 _lotteryId) public lotteryExist(_lotteryId) {
         Lottery storage _lottery = lotteryById[_lotteryId];
 
+        _checkIfLotteryIsOpen(_lottery.state);
         _checkIfLotteryHasFinished(_lottery.endTime);
         _checkIfThereAreEnoughParticipants(_lottery.participants.length);
-        _checkIfLotteryIsOpen(_lottery.state);
 
         uint256 requestId = coordinator.requestRandomWords(
             keyHash,
