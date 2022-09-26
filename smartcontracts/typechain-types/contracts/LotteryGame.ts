@@ -60,6 +60,7 @@ export declare namespace LotteryGame {
 
 export interface LotteryGameInterface extends utils.Interface {
   functions: {
+    "balances(address)": FunctionFragment;
     "checkUpkeep(bytes)": FunctionFragment;
     "createLottery(uint256,uint256)": FunctionFragment;
     "declareWinner(uint256)": FunctionFragment;
@@ -78,6 +79,7 @@ export interface LotteryGameInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "balances"
       | "checkUpkeep"
       | "createLottery"
       | "declareWinner"
@@ -94,6 +96,10 @@ export interface LotteryGameInterface extends utils.Interface {
       | "subscriptionId"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "balances",
+    values: [PromiseOrValue<string>]
+  ): string;
   encodeFunctionData(
     functionFragment: "checkUpkeep",
     values: [PromiseOrValue<BytesLike>]
@@ -145,6 +151,7 @@ export interface LotteryGameInterface extends utils.Interface {
     values?: undefined
   ): string;
 
+  decodeFunctionResult(functionFragment: "balances", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "checkUpkeep",
     data: BytesLike
@@ -279,6 +286,11 @@ export interface LotteryGame extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    balances(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     checkUpkeep(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -342,6 +354,11 @@ export interface LotteryGame extends BaseContract {
     subscriptionId(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
+  balances(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   checkUpkeep(
     arg0: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -403,6 +420,11 @@ export interface LotteryGame extends BaseContract {
   subscriptionId(overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
+    balances(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     checkUpkeep(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -505,6 +527,11 @@ export interface LotteryGame extends BaseContract {
   };
 
   estimateGas: {
+    balances(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     checkUpkeep(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -567,6 +594,11 @@ export interface LotteryGame extends BaseContract {
   };
 
   populateTransaction: {
+    balances(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     checkUpkeep(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides

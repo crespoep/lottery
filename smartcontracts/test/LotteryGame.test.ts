@@ -375,29 +375,27 @@ describe('LotteryGame', () => {
       expect(openLotteriesIds.map((val: any) => val.toNumber())).deep.equal([2])
     });
 
-    it('transfer the jackpot to the winner', async () => {
+    it('increments the winner balance with the jackpot', async () => {
       await fundSubscriptionWithLink();
-
+  
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       await lotteryContract.connect(user1).participate(1, OPTIONS);
       await lotteryContract.connect(user2).participate(1, OPTIONS);
-
+  
       await time.increase(DURATION)
-
+  
       let tx = await lotteryContract.declareWinner(1)
-
       let receipt = await tx.wait()
-
+  
       const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
       const requestId = event.args.requestId
-
-      await expect(await vrfCoordinatorContract.fulfillRandomWords(
+  
+      await vrfCoordinatorContract.fulfillRandomWords(
         requestId,
         lotteryContract.address
-      )).to.changeEtherBalance(
-        user2,
-        TICKET_PRICE.mul(2)
       );
+  
+      expect(await lotteryContract.balances(user2.address)).to.eq(ethers.utils.parseEther("2"))
     });
 
     it('changes lottery state to WINNER_DECLARED when there is a winner', async () => {
