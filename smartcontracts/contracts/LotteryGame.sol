@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import {KeeperCompatible} from "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 error TicketPriceNotGreaterThanZero();
 error LotteryDurationNotEnough();
@@ -24,11 +24,10 @@ error LotteryAlreadyClosed();
 /** @author Pedro Crespo
  *  @title Crypto lottery game
  */
-contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
+contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
     using Counters for Counters.Counter;
-
     using EnumerableSet for EnumerableSet.UintSet;
-
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     struct Lottery {
         uint256 id;
@@ -36,7 +35,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         uint256 endTime;
         uint256 jackpot;
         address winner;
-        address[] participants;
         State state;
     }
 
@@ -66,18 +64,12 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
     mapping(uint256 => uint256) private lotteryIdByRequestId;
     mapping(address => uint256[]) private participationsByUser;
     mapping(address => uint256) public balances;
+    mapping(uint256 => EnumerableSet.AddressSet) private participantsByLotteryId;
 
     uint256[] public randomWords;
 
-    event LotteryCreated(
-        uint256 indexed id,
-        uint256 indexed ticketPrice,
-        uint256 endDate
-    );
-    event ParticipationRegistered(
-        uint256 indexed lotteryId,
-        address indexed user
-    );
+    event LotteryCreated(uint256 indexed id, uint256 indexed ticketPrice, uint256 endDate);
+    event ParticipationRegistered(uint256 indexed lotteryId, address indexed user);
     event WinnerRequested(uint256 indexed lotteryId, uint256 indexed requestId);
     event WinnerDeclared(uint256 indexed lotteryId, address indexed winner);
 
@@ -119,17 +111,13 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *  @param _ticket amount of money needed to participate in the lottery
      *  @param _duration how much time the lottery will last in seconds
      */
-    function createLottery(uint256 _ticket, uint256 _duration)
-        external
-        onlyOwner
-    {
+    function createLottery(uint256 _ticket, uint256 _duration) external onlyOwner {
         _checkIfTicketPriceIsValid(_ticket);
         _checkIfDurationIsValid(_duration);
 
         uint256 _endTime = block.timestamp + _duration;
         lotteryId.increment();
         uint256 _currentId = lotteryId.current();
-        address[] memory _participants = new address[](0);
 
         lotteryById[_currentId] = Lottery({
             id: _currentId,
@@ -137,7 +125,6 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
             endTime: _endTime,
             jackpot: 0,
             winner: address(0),
-            participants: _participants,
             state: State.OPEN
         });
 
@@ -150,20 +137,16 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *  @dev adds the caller as a new participant to correspondent lottery
      *  @param _lotteryId lottery id
      */
-    function participate(uint256 _lotteryId)
-        external
-        payable
-        notOwner
-        lotteryExist(_lotteryId)
-    {
+    function participate(uint256 _lotteryId) external payable notOwner lotteryExist(_lotteryId) {
         Lottery storage _lottery = lotteryById[_lotteryId];
 
         _checkUserHasNotAlreadyParticipated(_lotteryId);
         _checkIfLotteryIsOpen(_lottery.state);
         _checkIfTicketPaymentIsExact(_lottery.ticket);
 
-        _lottery.participants.push(msg.sender);
         _lottery.jackpot += msg.value;
+
+        participantsByLotteryId[_lotteryId].add(msg.sender);
 
         participationsByUser[msg.sender].push(_lotteryId);
 
@@ -175,17 +158,13 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *       It returns the first one ready to be closed that it finds.
      *  @return a tuple with boolean and the encoded lottery id to be closed if exists
      */
-    function checkUpkeep(bytes calldata)
-        external
-        view
-        override
-        returns (bool, bytes memory)
-    {
+    function checkUpkeep(bytes calldata) external view override returns (bool, bytes memory) {
         bool upkeepNeeded = false;
         bytes memory data = bytes("");
 
         uint256 i = 0;
-        while(!upkeepNeeded && i < openLotteries.length()) {
+        uint256 numberOfOpenLotteries = openLotteries.length();
+        while (!upkeepNeeded && i < numberOfOpenLotteries) {
             uint256 _lotteryId = openLotteries.at(i);
             Lottery memory _lottery = lotteryById[_lotteryId];
 
@@ -218,11 +197,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *  @param _user the user address
      *  @return the list of the participations
      */
-    function getParticipationsByUser(address _user)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getParticipationsByUser(address _user) external view returns (uint256[] memory) {
         return participationsByUser[_user];
     }
 
@@ -231,11 +206,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
      *  @param _lotteryId the lottery id
      *  @return the lottery
      */
-    function getLottery(uint256 _lotteryId)
-        external
-        view
-        returns (Lottery memory)
-    {
+    function getLottery(uint256 _lotteryId) external view returns (Lottery memory) {
         return lotteryById[_lotteryId];
     }
 
@@ -249,7 +220,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
         _checkIfLotteryIsOpen(_lottery.state);
         _checkIfLotteryHasFinished(_lottery.endTime);
-        _checkIfThereAreEnoughParticipants(_lottery.participants.length);
+        _checkIfThereAreEnoughParticipants(participantsByLotteryId[_lotteryId].length());
 
         uint256 requestId = coordinator.requestRandomWords(
             keyHash,
@@ -275,6 +246,10 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         return openLotteries.values();
     }
 
+    function getParticipantsByLotteryId(uint256 _lotteryId) external view returns (uint256) {
+        return participantsByLotteryId[_lotteryId].length();
+    }
+
     function withdraw() external {
         uint256 _balance = balances[msg.sender];
         require(_balance > 0);
@@ -282,13 +257,11 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         msg.sender.call{value: _balance}("");
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomness)
-        internal
-        override
-    {
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomness) internal override {
         uint256 _lotteryId = lotteryIdByRequestId[requestId];
         Lottery storage _lottery = lotteryById[_lotteryId];
-        address[] memory _participants = _lottery.participants;
+
+        address[] memory _participants = participantsByLotteryId[_lotteryId].values();
         address _winner = _participants[randomness[0] % _participants.length];
         _lottery.winner = _winner;
 
@@ -333,36 +306,22 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         }
     }
 
-    function _checkIfThereAreEnoughParticipants(uint256 _numberOfParticipants)
-        private
-        pure
-    {
+    function _checkIfThereAreEnoughParticipants(uint256 _numberOfParticipants) private pure {
         if (_numberOfParticipants < 2) {
             revert NotEnoughParticipants();
         }
     }
 
-    function _checkUserHasNotAlreadyParticipated(uint256 _lotteryId)
-        private
-        view
-    {
-        Lottery memory _lottery = lotteryById[_lotteryId];
-        address[] memory participants = _lottery.participants;
-        address user = msg.sender;
-        for (uint256 i = 0; i < participants.length; i++) {
-            if (user == participants[i]) {
-                revert UserHasAlreadyParticipated();
-            }
+    function _checkUserHasNotAlreadyParticipated(uint256 _lotteryId) private view {
+        EnumerableSet.AddressSet storage set = participantsByLotteryId[_lotteryId];
+        if (set.contains(msg.sender)) {
+            revert UserHasAlreadyParticipated();
         }
     }
 
-    function _keeperConditionsPassed(Lottery memory _lottery)
-        private
-        view
-        returns (bool)
-    {
+    function _keeperConditionsPassed(Lottery memory _lottery) private view returns (bool) {
         return (_lottery.endTime < block.timestamp &&
             _lottery.state == State.OPEN &&
-            _lottery.participants.length > 1);
+            participantsByLotteryId[_lottery.id].length() > 1);
     }
 }

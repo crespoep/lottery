@@ -35,7 +35,6 @@ export declare namespace LotteryGame {
     endTime: PromiseOrValue<BigNumberish>;
     jackpot: PromiseOrValue<BigNumberish>;
     winner: PromiseOrValue<string>;
-    participants: PromiseOrValue<string>[];
     state: PromiseOrValue<BigNumberish>;
   };
 
@@ -45,7 +44,6 @@ export declare namespace LotteryGame {
     BigNumber,
     BigNumber,
     string,
-    string[],
     number
   ] & {
     id: BigNumber;
@@ -53,7 +51,6 @@ export declare namespace LotteryGame {
     endTime: BigNumber;
     jackpot: BigNumber;
     winner: string;
-    participants: string[];
     state: number;
   };
 }
@@ -66,6 +63,7 @@ export interface LotteryGameInterface extends utils.Interface {
     "declareWinner(uint256)": FunctionFragment;
     "getLottery(uint256)": FunctionFragment;
     "getOpenLotteriesIds()": FunctionFragment;
+    "getParticipantsByLotteryId(uint256)": FunctionFragment;
     "getParticipationsByUser(address)": FunctionFragment;
     "lotteryId()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -85,6 +83,7 @@ export interface LotteryGameInterface extends utils.Interface {
       | "declareWinner"
       | "getLottery"
       | "getOpenLotteriesIds"
+      | "getParticipantsByLotteryId"
       | "getParticipationsByUser"
       | "lotteryId"
       | "owner"
@@ -119,6 +118,10 @@ export interface LotteryGameInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getOpenLotteriesIds",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getParticipantsByLotteryId",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getParticipationsByUser",
@@ -164,6 +167,10 @@ export interface LotteryGameInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "getLottery", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getOpenLotteriesIds",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getParticipantsByLotteryId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -308,6 +315,11 @@ export interface LotteryGame extends BaseContract {
 
     getOpenLotteriesIds(overrides?: CallOverrides): Promise<[BigNumber[]]>;
 
+    getParticipantsByLotteryId(
+      _lotteryId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     getParticipationsByUser(
       _user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -375,6 +387,11 @@ export interface LotteryGame extends BaseContract {
 
   getOpenLotteriesIds(overrides?: CallOverrides): Promise<BigNumber[]>;
 
+  getParticipantsByLotteryId(
+    _lotteryId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   getParticipationsByUser(
     _user: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -439,6 +456,11 @@ export interface LotteryGame extends BaseContract {
     ): Promise<LotteryGame.LotteryStructOutput>;
 
     getOpenLotteriesIds(overrides?: CallOverrides): Promise<BigNumber[]>;
+
+    getParticipantsByLotteryId(
+      _lotteryId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getParticipationsByUser(
       _user: PromiseOrValue<string>,
@@ -544,6 +566,11 @@ export interface LotteryGame extends BaseContract {
 
     getOpenLotteriesIds(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getParticipantsByLotteryId(
+      _lotteryId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getParticipationsByUser(
       _user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -609,6 +636,11 @@ export interface LotteryGame extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getOpenLotteriesIds(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getParticipantsByLotteryId(
+      _lotteryId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

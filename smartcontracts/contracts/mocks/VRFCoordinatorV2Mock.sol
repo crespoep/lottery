@@ -31,16 +31,8 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
         bool success
     );
     event SubscriptionCreated(uint64 indexed subId, address owner);
-    event SubscriptionFunded(
-        uint64 indexed subId,
-        uint256 oldBalance,
-        uint256 newBalance
-    );
-    event SubscriptionCanceled(
-        uint64 indexed subId,
-        address to,
-        uint256 amount
-    );
+    event SubscriptionFunded(uint64 indexed subId, uint256 oldBalance, uint256 newBalance);
+    event SubscriptionCanceled(uint64 indexed subId, address to, uint256 amount);
 
     uint64 s_currentSubId;
     uint256 s_nextRequestId = 1;
@@ -74,9 +66,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
      * @param _requestId the request to fulfill
      * @param _consumer the VRF randomness consumer to send the result to
      */
-    function fulfillRandomWords(uint256 _requestId, address _consumer)
-        external
-    {
+    function fulfillRandomWords(uint256 _requestId, address _consumer) external {
         uint256 startGas = gasleft();
         if (s_requests[_requestId].subId == 0) {
             revert("nonexistent request");
@@ -99,9 +89,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
         );
         (bool success, ) = _consumer.call{gas: req.callbackGasLimit}(callReq);
 
-        uint96 payment = uint96(
-            BASE_FEE + ((startGas - gasleft()) * GAS_PRICE_LINK)
-        );
+        uint96 payment = uint96(BASE_FEE + ((startGas - gasleft()) * GAS_PRICE_LINK));
         if (s_subscriptions[req.subId].balance < payment) {
             revert InsufficientBalance();
         }
@@ -160,10 +148,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
 
     function createSubscription() external override returns (uint64 _subId) {
         s_currentSubId++;
-        s_subscriptions[s_currentSubId] = Subscription({
-            owner: msg.sender,
-            balance: 0
-        });
+        s_subscriptions[s_currentSubId] = Subscription({owner: msg.sender, balance: 0});
         emit SubscriptionCreated(s_currentSubId, msg.sender);
         return s_currentSubId;
     }
@@ -190,11 +175,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
         );
     }
 
-    function cancelSubscription(uint64 _subId, address _to)
-        external
-        override
-        onlySubOwner(_subId)
-    {
+    function cancelSubscription(uint64 _subId, address _to) external override onlySubOwner(_subId) {
         emit SubscriptionCanceled(_subId, _to, s_subscriptions[_subId].balance);
         delete (s_subscriptions[_subId]);
     }
@@ -223,19 +204,11 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
         return (3, 2000000, new bytes32[](0));
     }
 
-    function addConsumer(uint64 _subId, address _consumer)
-        external
-        pure
-        override
-    {
+    function addConsumer(uint64 _subId, address _consumer) external pure override {
         revert("not implemented");
     }
 
-    function removeConsumer(uint64 _subId, address _consumer)
-        external
-        pure
-        override
-    {
+    function removeConsumer(uint64 _subId, address _consumer) external pure override {
         revert("not implemented");
     }
 
@@ -247,11 +220,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface {
         revert("not implemented");
     }
 
-    function acceptSubscriptionOwnerTransfer(uint64 _subId)
-        external
-        pure
-        override
-    {
+    function acceptSubscriptionOwnerTransfer(uint64 _subId) external pure override {
         revert("not implemented");
     }
 }
