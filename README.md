@@ -8,12 +8,9 @@ cd smartcontracts
 npm run deploy:testnet
 ```
 
-Fund it with enough LINK (e.g. 1 LINK):
-```bash
-npx hardhat fund-link --contract <contract-address> --linkaddress 0xa36085F69e2889c224210F603D836748e7dC0088 --fundamount 1000000000000000000 --network kovan
-```
+Create a new subscription, fund it with LINK and copy the subscriptionId in .env file.
 
-Copy .env.example file to .env and complete the real values of diferent environment variables
+Copy .env.example file to .env and complete the real values of different environment variables
 
 ### Register new keeper
 Head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.

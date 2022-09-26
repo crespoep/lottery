@@ -2,16 +2,16 @@ import {HardhatRuntimeEnvironment} from "hardhat/types";
 import { task } from "hardhat/config";
 
 task("participate", "Participate in a lottery")
+  .addParam("contract", "LotteryGame contract address")
   .addParam("lotteryid", "Lottery id")
   .addParam("user", "User address")
   .addParam("ticket", "Payment to participate in the lottery")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const ethers = hre.ethers
 
-    const Lottery = await hre.deployments.get("LotteryGame");
     const lottery = await ethers.getContractAt(
       "LotteryGame",
-      Lottery.address
+      taskArgs.contract
     );
 
     const provider = new ethers.providers.JsonRpcProvider
