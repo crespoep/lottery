@@ -167,7 +167,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
     /**
      *  @dev called by keeper to check if at least one lottery is ready to be closed
-             It returns the first one ready to closed that it finds.
+     *       It returns the first one ready to closed that it finds.
      *  @param not used
      *  @return a tuple with boolean and the encoded lottery id to be closed if exists
      */
