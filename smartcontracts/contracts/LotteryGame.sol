@@ -184,7 +184,8 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         bool upkeepNeeded = false;
         bytes memory data = bytes("");
 
-        for (uint256 i = 0; i < openLotteries.length(); i++) {
+        uint256 i = 0;
+        while(!upkeepNeeded && i < openLotteries.length()) {
             uint256 _lotteryId = openLotteries.at(i);
             Lottery memory _lottery = lotteryById[_lotteryId];
 
@@ -192,6 +193,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
                 upkeepNeeded = true;
                 data = abi.encode(_lotteryId);
             }
+            i++;
         }
 
         return (upkeepNeeded, data);
