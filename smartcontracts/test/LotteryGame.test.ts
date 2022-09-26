@@ -422,6 +422,40 @@ describe('LotteryGame', () => {
       expect(lottery.state).to.equal(2)
     });
   })
+  
+  describe('withdraw', async () => {
+    it('transfers the money to the caller successfully', async () => {
+      await fundSubscriptionWithLink();
+  
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user2).participate(1, OPTIONS);
+  
+      await time.increase(DURATION)
+  
+      let tx = await lotteryContract.declareWinner(1)
+      let receipt = await tx.wait()
+  
+      const event = receipt.events.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event.args.requestId
+  
+      await vrfCoordinatorContract.fulfillRandomWords(
+        requestId,
+        lotteryContract.address
+      );
+      
+      await expect(
+        lotteryContract.connect(user2).withdraw())
+          .to.changeEtherBalance(user2, ethers.utils.parseEther("2")
+      );
+    });
+  
+    it("should fail if user's balance is zero", async () => {
+      await expect(
+        lotteryContract.connect(user2).withdraw()
+      ).to.be.reverted
+    });
+  })
 
   describe("keeper", async () => {
     it('checkUpkeep should return false when there is no open lotteries', async () => {
