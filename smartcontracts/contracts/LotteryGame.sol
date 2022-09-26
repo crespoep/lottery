@@ -269,6 +269,13 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatibleInterface {
         return openLotteries;
     }
 
+    function withdraw() external {
+        uint256 _balance = balances[msg.sender];
+        require(_balance > 0);
+        balances[msg.sender] = 0;
+        msg.sender.call{value: _balance}("");
+    }
+
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomness)
         internal
         override

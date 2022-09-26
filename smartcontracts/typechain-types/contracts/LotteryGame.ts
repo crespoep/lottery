@@ -75,6 +75,7 @@ export interface LotteryGameInterface extends utils.Interface {
     "randomWords(uint256)": FunctionFragment;
     "rawFulfillRandomWords(uint256,uint256[])": FunctionFragment;
     "subscriptionId()": FunctionFragment;
+    "withdraw()": FunctionFragment;
   };
 
   getFunction(
@@ -94,6 +95,7 @@ export interface LotteryGameInterface extends utils.Interface {
       | "randomWords"
       | "rawFulfillRandomWords"
       | "subscriptionId"
+      | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -150,6 +152,7 @@ export interface LotteryGameInterface extends utils.Interface {
     functionFragment: "subscriptionId",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "balances", data: BytesLike): Result;
   decodeFunctionResult(
@@ -199,6 +202,7 @@ export interface LotteryGameInterface extends utils.Interface {
     functionFragment: "subscriptionId",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
     "LotteryCreated(uint256,uint256,uint256)": EventFragment;
@@ -352,6 +356,10 @@ export interface LotteryGame extends BaseContract {
     ): Promise<ContractTransaction>;
 
     subscriptionId(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    withdraw(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   balances(
@@ -419,6 +427,10 @@ export interface LotteryGame extends BaseContract {
 
   subscriptionId(overrides?: CallOverrides): Promise<BigNumber>;
 
+  withdraw(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     balances(
       arg0: PromiseOrValue<string>,
@@ -484,6 +496,8 @@ export interface LotteryGame extends BaseContract {
     ): Promise<void>;
 
     subscriptionId(overrides?: CallOverrides): Promise<BigNumber>;
+
+    withdraw(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
@@ -591,6 +605,10 @@ export interface LotteryGame extends BaseContract {
     ): Promise<BigNumber>;
 
     subscriptionId(overrides?: CallOverrides): Promise<BigNumber>;
+
+    withdraw(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -660,5 +678,9 @@ export interface LotteryGame extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     subscriptionId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    withdraw(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
   };
 }
