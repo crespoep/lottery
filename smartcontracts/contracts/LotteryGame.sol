@@ -246,8 +246,8 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
         return openLotteries.values();
     }
 
-    function getParticipantsByLotteryId(uint256 _lotteryId) external view returns (uint256) {
-        return participantsByLotteryId[_lotteryId].length();
+    function getParticipantsByLotteryId(uint256 _lotteryId) external view returns (address[] memory) {
+        return participantsByLotteryId[_lotteryId].values();
     }
 
     function withdraw() external {

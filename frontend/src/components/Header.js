@@ -14,7 +14,7 @@ const Header = ({
     setAccount(signerAddress)
 
     const balance = await getBalance(signerAddress)
-    console.log(balance)
+
     setBalance(balance);
   }
 
