@@ -8,9 +8,9 @@ cd smartcontracts
 npm run deploy:testnet
 ```
 
-Create a new subscription, fund it with LINK and copy the subscriptionId in .env file.
-
 Copy .env.example file to .env and complete the real values of different environment variables
+
+Create a new subscription, fund it with LINK and copy the subscriptionId in .env file.
 
 ### Register new keeper
 Head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.
