@@ -1,5 +1,4 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/src/signers";
-
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers"
@@ -44,7 +43,7 @@ describe('LotteryGame', () => {
   })
 
   it('is deployed successfully', async () => {
-    const address = await lotteryContract.address;
+    const address = lotteryContract.address;
 
     expect(address).not.to.equal(null);
     expect(address).not.to.equal(0x0);
