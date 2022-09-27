@@ -125,7 +125,7 @@ describe('LotteryGame', () => {
     it("should not have any participants at first", async () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
       const participants = await lotteryContract.getParticipantsByLotteryId(1);
-      expect(participants).to.be.equal(0)
+      expect(participants).to.deep.equal([])
     });
 
     it('should have open state', async () => {
@@ -205,7 +205,7 @@ describe('LotteryGame', () => {
       await lotteryContract.createLottery(TICKET_PRICE, DURATION);
 
       await lotteryContract.connect(user1).participate(1, OPTIONS);
-      expect(await lotteryContract.getParticipantsByLotteryId(1)).to.equal(1)
+      expect(await lotteryContract.getParticipantsByLotteryId(1)).to.deep.equal([user1.address])
     });
 
     it('should emit ParticipationRegistered event', async () => {

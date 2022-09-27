@@ -11,14 +11,6 @@ const Navbar = ({ account }) => (
           Home
         </NavLink>
       </li>
-      <li>
-        <NavLink
-          to="/about"
-          className={({isActive}) => ("mr-4" + (isActive ? " text-light-green" : ""))}
-        >
-          About
-        </NavLink>
-      </li>
       {
         account &&
           <li>

@@ -14,7 +14,7 @@ const getOpenLotteries = async () => {
 const participate = async (id, ticket) => {
   const { contract, signer } = await getContract();
 
-  await contract.connect(signer).participate(
+  return await contract.connect(signer).participate(
     parseInt(id),
     {
       value: ticket.toString(),
@@ -31,8 +31,14 @@ const getParticipationsByUser = async () => {
   )
 }
 
+const getParticipantsByLottery = async (lotteryId) => {
+  const { contract } = await getContract();
+  return await contract.getParticipantsByLotteryId(lotteryId);
+}
+
 export {
   getOpenLotteries,
   getParticipationsByUser,
+  getParticipantsByLottery,
   participate
 }

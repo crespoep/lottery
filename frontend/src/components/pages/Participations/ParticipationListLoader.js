@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {ethers} from "ethers";
 import logo from "../../../assets/img/eth-logo.png";
-import { useOutletContext } from "react-router-dom"
+import { useOutletContext, useNavigate } from "react-router-dom"
 import ParticipationFilterButton from "./ParticipationFilterButton";
 import Message from "./../../Message";
 import withLoading from "../../withLoading";
@@ -13,9 +13,14 @@ const ParticipationListLoader = () => {
   const [ participations, setParticipations ] = useState([])
   const [ loading, setLoading ] = useState(false);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchParticipations = async () => {
       try {
+        if (!account) {
+          navigate("/");
+        }
         const participations = await getParticipationsByUser()
 
         setParticipations(participations)

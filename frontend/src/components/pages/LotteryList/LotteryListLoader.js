@@ -3,12 +3,11 @@ import { ethers } from "ethers";
 import logo from "../../../assets/img/eth-logo.png";
 import { lotteryStates } from "../../../contractEnumStates";
 import {useOutletContext} from "react-router-dom";
-import { getOpenLotteries, participate } from "../../../services/contractApi";
+import { getOpenLotteries, participate, getParticipantsByLottery } from "../../../services/contractApi";
 import Message from "./../../Message";
 import withLoading from "../../withLoading";
 
 const LotteryListLoader = () => {
-  const [ account ] = useOutletContext()
   const [ lotteries, setLotteries ] = useState([])
   const [ loading, setLoading ] = useState(false);
 
@@ -27,12 +26,6 @@ const LotteryListLoader = () => {
     fetchOpenLotteries()
   }, [])
 
-  const hasParticipated = participants => {
-    if (account) {
-      return participants.includes(ethers.utils.getAddress(account))
-    }
-  }
-
   const LotteryListWithLoading = withLoading(LotteryList);
 
   return (
@@ -42,7 +35,6 @@ const LotteryListLoader = () => {
         <LotteryListWithLoading
           isLoading={loading}
           lotteries={lotteries}
-          hasParticipated={hasParticipated}
         />
       }
     </div>
@@ -51,7 +43,6 @@ const LotteryListLoader = () => {
 
 const LotteryList = ({
   lotteries,
-  hasParticipated,
 }) => {
   return (
     lotteries.length > 0
@@ -62,7 +53,6 @@ const LotteryList = ({
               <div key={lottery.id.toNumber()}>
                 <Lottery
                   {...lottery}
-                  hasParticipated={hasParticipated(lottery.participants)}
                 />
               </div>
           )
@@ -76,12 +66,33 @@ const Lottery = ({
   id,
   ticket,
   jackpot,
-  participants,
   endTime,
   state,
-  hasParticipated
 }) => {
+  const [account] = useOutletContext()
   const lotteryState = lotteryStates[state];
+
+  const [participants, setParticipants] = useState([])
+  const [hasParticipated, setHasParticipated] = useState(false)
+
+  useEffect(() => {
+    const getParticipants = async () => {
+
+      const participants = await getParticipantsByLottery(id);
+      setParticipants(participants);
+
+      const hasParticipated = userHasParticipated(participants)
+      setHasParticipated(hasParticipated)
+    }
+    getParticipants()
+  }, [account])
+
+  const userHasParticipated = (participants) => {
+    if (account) {
+      return participants.includes(ethers.utils.getAddress(account))
+    }
+    return false;
+  }
 
   const formatToEther = number => ethers.utils.formatEther(number);
 
@@ -89,7 +100,13 @@ const Lottery = ({
     (new Date(finalizationTime.toNumber() * 1000)).toTimeString()
 
   const participateWithId = async () => {
-    await participate(id, ticket)
+    try {
+      const receipt = await participate(id, ticket)
+      setHasParticipated(true)
+      console.log(receipt)
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   return (
@@ -114,18 +131,19 @@ const Lottery = ({
         </ul>
       </div>
       <ParticipateButton
-        hasParticipated={hasParticipated}
         participateWithId={participateWithId}
         lotteryState={lotteryState}
+        participants={participants}
+        hasParticipated={hasParticipated}
       />
     </div>
   )
 }
 
 const ParticipateButton = ({
-  hasParticipated,
   participateWithId,
-  lotteryState
+  lotteryState,
+  hasParticipated
 }) => {
   return (
     <>

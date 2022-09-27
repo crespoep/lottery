@@ -5,7 +5,6 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LotteryListLoader from "./components/pages/LotteryList/LotteryListLoader";
-import About from "./components/pages/About/About";
 import ParticipationListLoader from "./components/pages/Participations/ParticipationListLoader";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -15,7 +14,6 @@ root.render(
       <Routes>
         <Route path="/" element={<App />}>
           <Route path="/" element={<LotteryListLoader />} />
-          <Route path="/about" element={<About />} />
           <Route path="/my-participations" element={<ParticipationListLoader />} />
         </Route>
       </Routes>

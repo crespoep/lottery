@@ -15,12 +15,17 @@ Copy .env.example file to .env and complete the real values of different environ
 ### Register new keeper
 Head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.
 
+### Compile the contracts
+```bash
+npx hardhat compile
+```
+
 ### Create lotteries and participations
 Go to smartcontracts/README.md to find explanations for the different commands.
 
 ## Frontend
 ```bash
-cp smartcontracts/deployments/kovan/LotteryGame.json frontend/src/contracts/LotteryGame.json
+cp smartcontracts/artifacts/contracts/LotteryGame.sol/LotteryGame.json frontend/src/contracts/LotteryGame.json
 ```
 
 Copy the contract-address.example.json and change the name to contract-address.json, then complete the deployed contract address
