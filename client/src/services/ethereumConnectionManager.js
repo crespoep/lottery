@@ -1,6 +1,5 @@
 import {BigNumber, ethers} from 'ethers'
-import contractAddress from "../contracts/contract-address.json";
-import LotteryArtifact from "../contracts/LotteryGame.json";
+import data from "../contracts.json";
 
 const connect = async () => {
   const connection = await getConnection();
@@ -48,7 +47,7 @@ const getBalance = async (account) => {
 }
 
 const getContract = async () => {
-  return await initContract(contractAddress.Lottery, LotteryArtifact.abi);
+  return await initContract(data.contracts.LotteryGame.address, data.contracts.LotteryGame.abi);
 }
 
 const initContract = async (contractAddress, abi) => {
