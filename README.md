@@ -1,49 +1,41 @@
 # Lottery
 
-## Docker
-###
-Copy the env file for hardhat and complete the variables
-```bash
-cp smartcontracts/.env.example smartcontracts/.env
-```
-
-### Compile the contracts
-```bash
-npx hardhat compile
-```
-
-## Frontend
-
-Copy the contract artifact
-```bash
-npx hardhat export --export ../client/src/contracts.json --network mumbai
-```
-
-
-## Smart contract
-Deploy the LotteryGame contract to testnet:
-
-```bash
-cd smartcontracts
-npm run deploy:testnet
-```
-
-Copy .env.example file to .env and complete the real values of different environment variables
-
-Create a new subscription, fund it with LINK and copy the subscriptionId in .env file.
-
+---
+## Necessary steps to make it work:
+### VRF Subscription
+Create a new subscription or use already created one, fund it with LINK and copy the subscriptionId in .env file.
 ### Register new keeper
-Head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.
+After deploying, head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.
 
+---
 
-
-### Create lotteries and participations
-Go to smartcontracts/README.md to find explanations for the different commands.
-
-
-
-Copy the contract-address.example.json and change the name to contract-address.json, then complete the deployed contract address
+## Project
+Copy the env file and complete the variables
 ```bash
-
+cp smart-contracts/.env.example smart-contracts/.env
 ```
 
+Deploy the contract to local network:
+```bash
+docker exec smart-contracts npm run deploy:local
+```
+or both deploy and run the node:
+```bash
+docker exec smart-contracts npm run hardhat:local
+```
+
+Also you can deploy to testnet with:
+```bash
+docker exec smart-contracts npm run deploy:testnet
+```
+
+Export the deployed contract data and copy to the client container
+```bash
+npx hardhat export --export ./contracts.json --network <network>
+docker cp smart-contracts/contracts.json client:/client
+```
+
+Run de client
+```bash
+docker exec client npm start
+```

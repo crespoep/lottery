@@ -1,0 +1,11 @@
+
+node_modules
+artifacts
+cache
+deployments/localhost
+coverage
+typechain-types
+
+.env
+coverage.json
+contracts.json

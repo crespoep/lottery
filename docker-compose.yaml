@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 services:
   client:
     container_name: client
@@ -7,17 +7,17 @@ services:
       - "3000:3000"
     volumes:
       - "./client:/client"
-#      - "./client/node_modules:/client/node_modules"
-      - "node_modules:/client/node_modules"
     networks: ["lottery"]
 
-volumes:
-  node_modules:
-#    driver: local
-#    driver_opts:
-#      type: none
-#      o: bind
-#      device: ./client/node_modules
+  smart-contracts:
+    container_name: smart-contracts
+    build: "smart-contracts/"
+    ports:
+      - "8545:8545"
+    volumes:
+      - "./smart-contracts:/smart-contracts"
+    networks: ["lottery"]
+
 networks:
   lottery:
     name: lottery
