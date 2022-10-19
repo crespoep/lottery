@@ -7,8 +7,6 @@ Create a new subscription or use already created one, fund it with LINK and copy
 ### Register new keeper
 After deploying, head over to https://keepers.chain.link/ and register a new custom logic keeper with the deployed contract address.
 
----
-
 ## Project
 Copy the env file and complete the variables
 ```bash
@@ -31,8 +29,8 @@ docker exec smart-contracts npm run deploy:testnet
 
 Export the deployed contract data and copy to the client container
 ```bash
-npx hardhat export --export ./contracts.json --network <network>
-docker cp smart-contracts/contracts.json client:/client
+docker exec smart-contracts npx hardhat export --export ./contracts.json --network <network>
+docker cp smart-contracts/contracts.json client:/client/src
 ```
 
 Run de client

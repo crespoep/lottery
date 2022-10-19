@@ -21,7 +21,7 @@ error TransferToWinnerFailed();
 error NotEnoughParticipants();
 error LotteryAlreadyClosed();
 
-/** @author Pedro Crespo
+/** @author Ezequiel Pedro Crespo
  *  @title Crypto lottery game
  */
 contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
@@ -50,6 +50,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
     uint32 private constant NUM_WORDS = 1;
 
     uint64 public subscriptionId;
+    uint256 public platformFee;
 
     bytes32 internal keyHash;
 
@@ -63,7 +64,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
     mapping(uint256 => Lottery) private lotteryById;
     mapping(uint256 => uint256) private lotteryIdByRequestId;
     mapping(address => uint256[]) private participationsByUser;
-    mapping(address => uint256) public balances;
+    mapping(address => uint256) private balances;
     mapping(uint256 => EnumerableSet.AddressSet) private participantsByLotteryId;
 
     uint256[] public randomWords;
@@ -98,12 +99,14 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
     constructor(
         address _vrfCoordinatorAddress,
         bytes32 _keyHash,
-        uint64 _subscriptionId
+        uint64 _subscriptionId,
+        uint256 _platformFee
     ) VRFConsumerBaseV2(_vrfCoordinatorAddress) {
         coordinator = VRFCoordinatorV2Interface(_vrfCoordinatorAddress);
         keyHash = _keyHash;
         subscriptionId = _subscriptionId;
         owner = msg.sender;
+        platformFee = _platformFee;
     }
 
     /**
@@ -145,9 +148,7 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
         _checkIfTicketPaymentIsExact(_lottery.ticket);
 
         _lottery.jackpot += msg.value;
-
         participantsByLotteryId[_lotteryId].add(msg.sender);
-
         participationsByUser[msg.sender].push(_lotteryId);
 
         emit ParticipationRegistered(_lotteryId, msg.sender);
@@ -193,6 +194,16 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
     }
 
     /**
+     *  @dev withdrawal
+     */
+    function withdraw() external {
+        uint256 _balance = balances[msg.sender];
+        require(_balance > 0);
+        balances[msg.sender] = 0;
+        msg.sender.call{value: _balance}("");
+    }
+
+    /**
      *  @dev returns a list of lotteries ids which user has participated in
      *  @param _user the user address
      *  @return the list of the participations
@@ -208,6 +219,40 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
      */
     function getLottery(uint256 _lotteryId) external view returns (Lottery memory) {
         return lotteryById[_lotteryId];
+    }
+
+    /**
+     *  @dev returns an account's balance
+     *  @return the account
+     */
+    function getBalance() external view returns (uint256) {
+        return balances[msg.sender];
+    }
+
+    /**
+     *  @dev returns the list of participants in a specific lottery
+     *  @param _lotteryId lottery id
+     *  @return the list of participants
+     */
+    function getParticipantsByLotteryId(uint256 _lotteryId) external view returns (address[] memory) {
+        return participantsByLotteryId[_lotteryId].values();
+    }
+
+    /**
+     *  @dev returns the ids of the lotteries where winner has not been established yet.
+     *       The lotteries may be already closed and randomness requested but not received.
+     *  @return the list of lotteries ids
+     */
+    function getOpenLotteriesIds() public view returns (uint256[] memory) {
+        return openLotteries.values();
+    }
+
+    /**
+     *  @dev sets the subscription id for the VRF
+     *  @param _subscriptionId the subscription ID
+     */
+    function setSubscriptionId(uint64 _subscriptionId) external {
+        subscriptionId = _subscriptionId;
     }
 
     /** @dev Requests a random number to oracles and closes the correspondent lottery.
@@ -231,30 +276,9 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
         );
 
         lotteryIdByRequestId[requestId] = _lotteryId;
-
         _lottery.state = State.CLOSED;
 
         emit WinnerRequested(_lotteryId, requestId);
-    }
-
-    /**
-     *  @dev returns the ids of the lotteries where winner has not been established yet.
-     *       The lotteries may be already closed and randomness requested but not received.
-     *  @return the list of lotteries ids
-     */
-    function getOpenLotteriesIds() public view returns (uint256[] memory) {
-        return openLotteries.values();
-    }
-
-    function getParticipantsByLotteryId(uint256 _lotteryId) external view returns (address[] memory) {
-        return participantsByLotteryId[_lotteryId].values();
-    }
-
-    function withdraw() external {
-        uint256 _balance = balances[msg.sender];
-        require(_balance > 0);
-        balances[msg.sender] = 0;
-        msg.sender.call{value: _balance}("");
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomness) internal override {
@@ -264,15 +288,12 @@ contract LotteryGame is VRFConsumerBaseV2, KeeperCompatible {
         address[] memory _participants = participantsByLotteryId[_lotteryId].values();
         address _winner = _participants[randomness[0] % _participants.length];
         _lottery.winner = _winner;
-
-        balances[_winner] += _lottery.jackpot;
-
+        balances[_winner] += _lottery.jackpot - ((_lottery.jackpot * platformFee) / 1e2);
+        balances[owner] += (_lottery.jackpot * platformFee) / 1e2;
         _lottery.state = State.WINNER_DECLARED;
-
         openLotteries.remove(_lotteryId);
 
         emit WinnerDeclared(_lotteryId, _winner);
-
         delete lotteryIdByRequestId[requestId];
     }
 

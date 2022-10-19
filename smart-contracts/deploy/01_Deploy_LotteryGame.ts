@@ -24,13 +24,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   const keyHash = networkConfig[chainId].keyHash;
+  const platformFee = networkConfig[chainId].platformFee;
 
   await deploy("LotteryGame", {
     from: deployer,
     args: [
       VRFCoordinatorAddress,
       keyHash,
-      subscriptionId
+      subscriptionId,
+      platformFee
     ],
     log: true,
   });

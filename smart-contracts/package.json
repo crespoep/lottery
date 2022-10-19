@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "hardhat:local": "hardhat node",
-    "deploy": "hardhat deploy",
+    "deploy:local": "hardhat deploy --network localhost",
     "deploy:testnet": "hardhat deploy --network mumbai",
-    "export:testnet": "hardhat export --export ../client/contracts.json --network mumbai",
+    "export:local": "hardhat export --export ./contracts.json --network localhost",
+    "export:testnet": "hardhat export --export ./contracts.json --network mumbai",
     "solhint": "solhint 'contracts/**/*.sol'",
     "prettier": "prettier --write 'contracts/**/*.sol'"
   },

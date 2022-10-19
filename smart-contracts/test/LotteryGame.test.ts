@@ -22,7 +22,8 @@ describe('LotteryGame', () => {
     lotteryContract: LotteryGame,
     VRFCoordinator,
     vrfCoordinatorContract: Contract,
-    fundSubscriptionWithLink: Function
+    fundSubscriptionWithLink: Function,
+    calculatePlatformFee: Function
   ;
 
   beforeEach(async () => {
@@ -40,6 +41,11 @@ describe('LotteryGame', () => {
       await vrfCoordinatorContract.createSubscription()
       await vrfCoordinatorContract.fundSubscription(1, ethers.utils.parseEther("1"))
     }
+  
+    calculatePlatformFee = async (jackpot: BigNumber) => {
+      const platformFee = await lotteryContract.platformFee();
+      return platformFee.mul(jackpot).div(1e2);
+    };
   })
 
   it('is deployed successfully', async () => {
@@ -394,8 +400,38 @@ describe('LotteryGame', () => {
         requestId,
         lotteryContract.address
       );
+      
+      const accumulatedJackpot = TICKET_PRICE.mul(2)
+      const platformFee = await calculatePlatformFee(accumulatedJackpot);
+      const finalJackpot = accumulatedJackpot.sub(platformFee)
+
+      expect(await lotteryContract.connect(user2).getBalance()).to.eq(finalJackpot)
+    });
   
-      expect(await lotteryContract.balances(user2.address)).to.eq(ethers.utils.parseEther("2"))
+    it('increments the contract owner balance according to platform fee', async () => {
+      await fundSubscriptionWithLink();
+  
+      await lotteryContract.createLottery(TICKET_PRICE, DURATION);
+      await lotteryContract.connect(user1).participate(1, OPTIONS);
+      await lotteryContract.connect(user2).participate(1, OPTIONS);
+  
+      await time.increase(DURATION)
+  
+      let tx = await lotteryContract.declareWinner(1)
+      let receipt = await tx.wait()
+  
+      const event = receipt?.events?.find((e: any) => e.event === "WinnerRequested")
+      const requestId = event?.args?.requestId
+  
+      await vrfCoordinatorContract.fulfillRandomWords(
+        requestId,
+        lotteryContract.address
+      );
+      
+      const accumulatedJackpot = TICKET_PRICE.mul(2);
+      const platformFee = await calculatePlatformFee(accumulatedJackpot);
+      
+      expect(await lotteryContract.connect(deployer).getBalance()).to.eq(platformFee)
     });
 
     it('changes lottery state to WINNER_DECLARED when there is a winner', async () => {
@@ -444,10 +480,9 @@ describe('LotteryGame', () => {
         lotteryContract.address
       );
       
-      await expect(
-        lotteryContract.connect(user2).withdraw())
-          .to.changeEtherBalance(user2, ethers.utils.parseEther("2")
-      );
+      expect(await lotteryContract.connect(user2).getBalance()).to.be.greaterThan(0)
+      await lotteryContract.connect(user2).withdraw();
+      expect(await lotteryContract.connect(user2).getBalance()).to.be.equal(0)
     });
   
     it("should fail if user's balance is zero", async () => {
