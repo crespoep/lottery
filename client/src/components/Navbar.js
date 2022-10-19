@@ -15,10 +15,10 @@ const Navbar = ({ account }) => (
         account &&
           <li>
             <NavLink
-              to="/my-participations"
+              to="/my-account"
               className={({isActive}) => ("mr-4" + (isActive ? " text-light-green" : ""))}
             >
-              My participations
+              My account
             </NavLink>
           </li>
       }

@@ -5,7 +5,7 @@ const AccountBalanceLabel = ({ account, balance }) => (
       { account.slice(0, 12) }...
     </div>
     <div className="bg-dark-green rounded-r-2xl text-white p-2">
-      { balance } ETH
+      { balance } MATIC
     </div>
   </div>
 )

@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {ethers} from "ethers";
-import logo from "../../../assets/img/eth-logo.png";
+import logo from "../../../assets/img/polygon-green-logo.svg";
 import { useOutletContext, useNavigate } from "react-router-dom"
 import ParticipationFilterButton from "./ParticipationFilterButton";
 import Message from "./../../Message";
@@ -46,8 +46,8 @@ const ParticipationListLoader = () => {
   const ParticipationListWithLoading = withLoading(ParticipationList);
 
   return (
-    <div className="my-6">
-      <h2 className="text-white text-center text-3xl">My participations</h2>
+    <div className="mt-20">
+      <h2 className="text-white text-center text-3xl mb-6">My participations</h2>
       <ParticipationListWithLoading
         isLoading={loading}
         participations={participations}

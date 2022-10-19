@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import { ethers } from "ethers";
-import logo from "../../../assets/img/eth-logo.png";
+import logo from "../../../assets/img/polygon-green-logo.svg";
 import { lotteryStates } from "../../../contractEnumStates";
 import {useOutletContext} from "react-router-dom";
 import { getOpenLotteries, participate, getParticipantsByLottery } from "../../../services/contractApi";
@@ -73,26 +73,15 @@ const Lottery = ({
   const lotteryState = lotteryStates[state];
 
   const [participants, setParticipants] = useState([])
-  // const [hasParticipated, setHasParticipated] = useState(false)
 
   useEffect(() => {
     const getParticipants = async () => {
 
       const participants = await getParticipantsByLottery(id);
       setParticipants(participants);
-
-      // const hasParticipated = userHasParticipated(participants)
-      // setHasParticipated(hasParticipated)
     }
     getParticipants()
   }, [account])
-
-  // const userHasParticipated = (participants) => {
-  //   if (account) {
-  //     return participants.includes(ethers.utils.getAddress(account))
-  //   }
-  //   return false;
-  // }
 
   const formatToEther = number => ethers.utils.formatEther(number);
 
@@ -102,7 +91,6 @@ const Lottery = ({
   const participateWithId = async () => {
     try {
       const receipt = await participate(id, ticket)
-      // setHasParticipated(true)
       console.log(receipt)
     } catch (e) {
       console.log(e)
@@ -155,7 +143,7 @@ const ParticipateButton = ({
   } else if (!account) {
     return (
       <div className="border-2 border-sky-500 rounded-2xl text-2xl p-3 mx-auto">
-        Connect!
+        Connect your wallet!
       </div>
     )
   } else if (account && participants.includes(ethers.utils.getAddress(account))) {

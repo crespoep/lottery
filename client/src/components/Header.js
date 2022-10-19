@@ -12,9 +12,7 @@ const Header = ({
   const connectWallet = async () => {
     const { signerAddress } = await getActiveAddress();
     setAccount(signerAddress)
-
     const balance = await getBalance(signerAddress)
-
     setBalance(balance);
   }
 
