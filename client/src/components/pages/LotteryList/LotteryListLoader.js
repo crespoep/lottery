@@ -73,7 +73,7 @@ const Lottery = ({
   const lotteryState = lotteryStates[state];
 
   const [participants, setParticipants] = useState([])
-  const [hasParticipated, setHasParticipated] = useState(false)
+  // const [hasParticipated, setHasParticipated] = useState(false)
 
   useEffect(() => {
     const getParticipants = async () => {
@@ -81,18 +81,18 @@ const Lottery = ({
       const participants = await getParticipantsByLottery(id);
       setParticipants(participants);
 
-      const hasParticipated = userHasParticipated(participants)
-      setHasParticipated(hasParticipated)
+      // const hasParticipated = userHasParticipated(participants)
+      // setHasParticipated(hasParticipated)
     }
     getParticipants()
   }, [account])
 
-  const userHasParticipated = (participants) => {
-    if (account) {
-      return participants.includes(ethers.utils.getAddress(account))
-    }
-    return false;
-  }
+  // const userHasParticipated = (participants) => {
+  //   if (account) {
+  //     return participants.includes(ethers.utils.getAddress(account))
+  //   }
+  //   return false;
+  // }
 
   const formatToEther = number => ethers.utils.formatEther(number);
 
@@ -102,7 +102,7 @@ const Lottery = ({
   const participateWithId = async () => {
     try {
       const receipt = await participate(id, ticket)
-      setHasParticipated(true)
+      // setHasParticipated(true)
       console.log(receipt)
     } catch (e) {
       console.log(e)
@@ -113,7 +113,7 @@ const Lottery = ({
     <div
       className="h-85 my-4 border-2 border-light-green shadow-lg shadow-light-green rounded-2xl bg-back-black my-6 p-4 flex flex-col justify-between"
     >
-      <div>
+      <div className="mb-4">
         <div className="flex flex-col text-center text-3xl text-light-green">
           <h3>Prize</h3>
           <div className="flex justify-center  mb-4 items-center">
@@ -134,7 +134,7 @@ const Lottery = ({
         participateWithId={participateWithId}
         lotteryState={lotteryState}
         participants={participants}
-        hasParticipated={hasParticipated}
+        account={account}
       />
     </div>
   )
@@ -143,29 +143,36 @@ const Lottery = ({
 const ParticipateButton = ({
   participateWithId,
   lotteryState,
-  hasParticipated
+  participants,
+  account
 }) => {
-  return (
-    <>
-      {
-        lotteryState === "OPEN"
-          ? hasParticipated
-            ? <div className="text-2xl p-3 mx-auto">You already participated !</div>
-            : <button
-              type="button"
-              className="border-2 border-light-green text-2xl p-3 mx-auto w-40 button-shadow block"
-              onClick={participateWithId}
-            >
-              Participate
-            </button>
-          : <div className="text-2xl p-3 mx-auto">
-              Lottery is closed to new participants. Winner is being determined.
-            </div>
-      }
-    </>
-  )
+  if (lotteryState !== "OPEN") {
+    return (
+      <div className="text-2xl p-3 mx-auto">
+        Lottery is closed to new participants. Winner is being determined.
+      </div>
+    )
+  } else if (!account) {
+    return (
+      <div className="border-2 border-sky-500 rounded-2xl text-2xl p-3 mx-auto">
+        Connect!
+      </div>
+    )
+  } else if (account && participants.includes(ethers.utils.getAddress(account))) {
+    return (
+      <div className="text-2xl p-3 mx-auto">You already participated !</div>
+    )
+  } else {
+    return (
+      <button
+        type="button"
+        className="border-2 border-light-green text-2xl p-3 mx-auto w-40 button-shadow block"
+        onClick={participateWithId}
+      >
+        Participate
+      </button>
+    )
+  }
 }
 
 export default LotteryListLoader
-
-
