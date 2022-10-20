@@ -1,5 +1,1 @@
-export const lotteryStates = [
-  "OPEN",
-  "CLOSED",
-  "WINNER DECLARED",
-]
+export const lotteryStates = ["OPEN", "CLOSED", "WINNER DECLARED"];
