@@ -43,8 +43,9 @@ const MyAccount = () => {
           <h2 className="text-white text-center text-3xl">My funds</h2>
           <div className="flex flex-col-reverse sm:flex-row justify-center sm:justify-end items-center my-6  sm:mr-6">
             <button
-              className="border-4 bg-sky-500 border-sky-500 text-black rounded-2xl text-2xl p-3 sm:mr-10"
+              className="border-4 bg-sky-500 border-sky-500 text-black rounded-2xl text-2xl p-3 sm:mr-10 disabled:bg-sky-900 disabled:border-sky-900"
               onClick={withdrawFunds}
+              disabled={ balance.toString() === '0' }
             >
               Withdraw
             </button>
